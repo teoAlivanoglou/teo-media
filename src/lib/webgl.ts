@@ -62,9 +62,10 @@ void main() {
         color1 = texture(u_texture1, uv1);
     }
 
-    // Foreground, scaled around center by u_mixRatio
+	float fgScale = 0.8;
+
     vec2 centeredUV = v_uv - 0.5;
-    vec2 scaledUV = centeredUV / u_mixRatio + 0.5;
+    vec2 scaledUV = centeredUV / fgScale + 0.5;
     vec2 uv2 = (scaledUV * u_canvasResolution - (u_canvasResolution - u_tex2Resolution * min(u_canvasResolution.x / u_tex2Resolution.x, u_canvasResolution.y / u_tex2Resolution.y)) * 0.5)
                / (u_tex2Resolution * min(u_canvasResolution.x / u_tex2Resolution.x, u_canvasResolution.y / u_tex2Resolution.y));
 

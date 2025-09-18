@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	// import { GPUCanvasRenderer } from '$lib/webgpu';
-	import { WebGLCanvasRenderer as GPUCanvasRenderer } from '$lib/webgl';
+	// import { WebGLCanvasRenderer as GPUCanvasRenderer } from '$lib/webgl';
+	import { WebGLRenderer } from '$lib/webgl/webgl-renderer';
 	import sample_background from '$lib/assets/bg.jpg';
 	import sample_foreground from '$lib/assets/fg.jpg';
 
@@ -10,7 +11,8 @@
 	let isLoading = $state(false);
 
 	let canvasEl!: HTMLCanvasElement;
-	let renderer: GPUCanvasRenderer | null = null;
+	// let renderer: GPUCanvasRenderer | null = null;
+	let renderer: WebGLRenderer;
 	let mix = $state(0.5);
 	let info = $state('Waiting...');
 
@@ -25,7 +27,8 @@
 
 		try {
 			info = 'Initializing WebGPU...';
-			renderer = new GPUCanvasRenderer(canvasEl);
+			// renderer = new GPUCanvasRenderer(canvasEl);
+			renderer = new WebGLRenderer(canvasEl);
 			await renderer.init();
 			info = 'WebGPU Ready';
 
@@ -174,10 +177,10 @@
 							`[grid-template-areas:'label''fg''bg']`
 						);
 					}
-					console.log(
-						`Updated preview aspect ratio: ${previewWidth}x${previewHeight}`,
-						previewAspectRatio
-					);
+					// console.log(
+					// 	`Updated preview aspect ratio: ${previewWidth}x${previewHeight}`,
+					// 	previewAspectRatio
+					// );
 				}
 			}
 		});
