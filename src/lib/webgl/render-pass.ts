@@ -1,72 +1,41 @@
 import { createProgram } from './shader-utils';
 import { UniformManager } from './uniform-manager';
+// import { TextureManager } from './texture-manager';
+import { FBO } from './fbo';
 
-import vertexSrc from '$lib/webgl/shaders/basic-vertex.glsl?raw';
-import blitFragment from '$lib/webgl/shaders/sample-fragment.glsl?raw';
+// import vertexSrc from '$lib/webgl/shaders/basic-vertex.glsl?raw';
+// import blitFragment from '$lib/webgl/shaders/sample-fragment.glsl?raw';
+
+type Source = WebGLTexture | FBO;
+type Destination = FBO | HTMLCanvasElement;
 
 export class RenderPass {
 	private gl: WebGL2RenderingContext;
 	private program: WebGLProgram;
 	private vao: WebGLVertexArrayObject | null = null;
-	public uniforms: UniformManager;
+	// public textureManager: TextureManager;
+	private sources: Source[];
+	private destination: Destination;
 
-	private fbo: WebGLFramebuffer | null = null;
-	private outputTexture: WebGLTexture | null = null;
-	public width: number;
-	public height: number;
+	public uniforms: UniformManager;
 
 	constructor(
 		gl: WebGL2RenderingContext,
 		vertexSource: string,
 		fragmentSource: string,
-		width: number,
-		height: number
+		sources: Source[], // input textures/FBOs/images
+		destination: Destination // where to render
 	) {
 		this.gl = gl;
-		this.width = width;
-		this.height = height;
-
 		this.program = createProgram(gl, vertexSource, fragmentSource);
+
+		this.sources = sources;
+		this.destination = destination;
+
+		this.use();
 		this.uniforms = new UniformManager(gl, this.program);
 
-		this.initFramebuffer();
 		this.initQuad();
-	}
-
-	private initFramebuffer(): void {
-		const gl = this.gl;
-
-		this.fbo = gl.createFramebuffer()!;
-		gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
-
-		this.outputTexture = gl.createTexture()!;
-		gl.bindTexture(gl.TEXTURE_2D, this.outputTexture);
-		gl.texImage2D(
-			gl.TEXTURE_2D,
-			0,
-			gl.RGBA,
-			this.width,
-			this.height,
-			0,
-			gl.RGBA,
-			gl.UNSIGNED_BYTE,
-			null
-		);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-		gl.framebufferTexture2D(
-			gl.FRAMEBUFFER,
-			gl.COLOR_ATTACHMENT0,
-			gl.TEXTURE_2D,
-			this.outputTexture,
-			0
-		);
-
-		const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-		if (status !== gl.FRAMEBUFFER_COMPLETE) console.warn('Framebuffer incomplete', status);
-
-		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 	}
 
 	private initQuad(): void {
@@ -87,15 +56,6 @@ export class RenderPass {
 		gl.bindVertexArray(null);
 	}
 
-	bindFramebuffer(): void {
-		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.fbo);
-	}
-
-	getOutputTexture(): WebGLTexture {
-		if (this.outputTexture) return this.outputTexture;
-		throw new Error('Could not get output texture');
-	}
-
 	use(): void {
 		this.gl.useProgram(this.program);
 		if (this.vao) {
@@ -104,21 +64,39 @@ export class RenderPass {
 	}
 
 	draw(): void {
-		this.gl.viewport(0, 0, this.width, this.height);
+		if (this.destination instanceof FBO) {
+			this.destination.bind();
+		} else {
+			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+		}
+
+		if ('width' in this.destination && 'height' in this.destination) {
+			this.gl.viewport(0, 0, this.destination.width, this.destination.height);
+		} else {
+			throw new Error('Destination does not contain width or height field');
+		}
+		// this.gl.viewport(0, 0, this.destination.width, this.destination.height);
+
+		// Bind sources
+		this.sources.forEach((src, i) => {
+			this.gl.activeTexture(this.gl.TEXTURE0 + i);
+			if (src instanceof FBO) {
+				this.gl.bindTexture(this.gl.TEXTURE_2D, src.texture);
+			} else {
+				this.gl.bindTexture(this.gl.TEXTURE_2D, src);
+			}
+			this.uniforms.setInt(`u_texture${i}`, i);
+		});
+
+		this.use();
 		this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-		console.timeLog('Pass drawn');
+
+		// if (this.destination instanceof FBO) this.destination.unbind();
 	}
 
-	static finalBlitPass: RenderPass | null = null;
-	static initFinalBlit(gl: WebGL2RenderingContext, canvasWidth: number, canvasHeight: number) {
-		if (!RenderPass.finalBlitPass) {
-			RenderPass.finalBlitPass = new RenderPass(
-				gl,
-				vertexSrc,
-				blitFragment,
-				canvasWidth,
-				canvasHeight
-			);
-		}
+	/** Convenience getter for the output texture */
+	getOutputTexture(): WebGLTexture | null {
+		if (this.destination instanceof FBO) return this.destination.texture;
+		return null;
 	}
 }

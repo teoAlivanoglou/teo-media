@@ -1,10 +1,34 @@
 export class TextureManager {
 	private gl: WebGL2RenderingContext;
 	private textures: (WebGLTexture | null)[] = [];
+	private imageCache = new WeakMap<HTMLImageElement, number>(); // maps image -> slot/index
 
 	constructor(gl: WebGL2RenderingContext) {
 		this.gl = gl;
 		this.textures = [null, null];
+	}
+
+	/**
+	 * Get or create a texture for an HTMLImageElement.
+	 * Returns the texture index in the internal array.
+	 */
+	async loadFromImage(
+		img: HTMLImageElement,
+		wrap = TextureWrap.CLAMP,
+		filter = TextureFilter.LINEAR
+	): Promise<number> {
+		if (this.imageCache.has(img)) {
+			return this.imageCache.get(img)!;
+		}
+
+		// find free slot
+		const index = this.textures.findIndex((t) => t === null);
+		if (index === -1) throw new Error('No free texture slots available');
+
+		await this.loadFromUrl(index, img.src, wrap, filter);
+		this.imageCache.set(img, index);
+
+		return index;
 	}
 
 	/**

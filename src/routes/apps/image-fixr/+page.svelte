@@ -2,32 +2,37 @@
 	import { onMount, onDestroy } from 'svelte';
 	// import { GPUCanvasRenderer } from '$lib/webgpu';
 	// import { WebGLCanvasRenderer as GPUCanvasRenderer } from '$lib/webgl';
-	import { WebGLRenderer } from '$lib/webgl/webgl-renderer';
+	import { type WebGLRenderer } from '$lib/webgl/webgl-renderer';
 	import sample_background from '$lib/assets/bg.jpg';
 	import sample_foreground from '$lib/assets/fg.jpg';
 
+	// --- State ---
 	let bgUrl = $state<string | null>(sample_background);
 	let fgUrl = $state<string | null>(sample_foreground);
 	let isLoading = $state(false);
-
-	let canvasEl!: HTMLCanvasElement;
-	// let renderer: GPUCanvasRenderer | null = null;
-	let renderer: WebGLRenderer;
 	let mix = $state(0.5);
 	let info = $state('Waiting...');
-
-	// Drag-over highlight state
 	let bgDragOver = $state(false);
 	let fgDragOver = $state(false);
 	let bgDropped = $state(false);
+	let fgDropped = $state(false);
+
+	let canvasEl!: HTMLCanvasElement;
+	let containerEl: HTMLDivElement | null = null;
+
+	let renderer = $state<WebGLRenderer | null>(null);
+	let resizeObserver: ResizeObserver | null = null;
+
+	// let containerAspect: number = 0;
 
 	// Initialize WebGPU renderer
 	onMount(async () => {
+		const { WebGLRenderer } = await import('$lib/webgl/webgl-renderer');
+
 		if (!canvasEl) return;
 
 		try {
 			info = 'Initializing WebGPU...';
-			// renderer = new GPUCanvasRenderer(canvasEl);
 			renderer = new WebGLRenderer(canvasEl);
 			await renderer.init();
 			info = 'WebGPU Ready';
@@ -45,26 +50,51 @@
 		}
 	});
 
-	// React to mix changes
+	// --- Reactive updates
 	$effect(() => {
-		if (renderer) {
-			renderer.setMixValue(mix);
+		if (!renderer) {
+			console.log('renderer null or uninitialized');
+			return;
 		}
+
+		renderer.setMixValue(mix);
+
+		if (bgUrl) renderer.updateTexture(0, bgUrl);
+
+		if (fgUrl) renderer.updateTexture(1, fgUrl);
 	});
 
-	// React to background URL changes
-	$effect(() => {
-		if (renderer && bgUrl) {
-			renderer.updateTexture(0, bgUrl);
-		}
-	});
+	// --- Drag & Drop ---
+	function handleDrop(event: DragEvent, target: 'bg' | 'fg') {
+		event.preventDefault();
+		const file = event.dataTransfer?.files[0];
 
-	// React to foreground URL changes
-	$effect(() => {
-		if (renderer && fgUrl) {
-			renderer.updateTexture(1, fgUrl);
+		if (!file || !file.type.startsWith('image/')) return;
+
+		const url = URL.createObjectURL(file);
+		if (target === 'bg') {
+			bgUrl = url;
+			bgDragOver = false;
+			bgDropped = true;
+			setTimeout(() => (bgDropped = false), 300);
+		} else {
+			fgUrl = url;
+			fgDragOver = false;
+			fgDropped = true;
+			setTimeout(() => (fgDropped = false), 300);
 		}
-	});
+	}
+
+	function allowDrop(event: DragEvent, target: 'bg' | 'fg') {
+		event.preventDefault();
+		if (target === 'bg') bgDragOver = true;
+		else fgDragOver = true;
+	}
+
+	function dragLeave(target: 'bg' | 'fg') {
+		if (target === 'bg') bgDragOver = false;
+		else fgDragOver = false;
+	}
 
 	function removeBg() {
 		bgUrl = null;
@@ -74,62 +104,16 @@
 		fgUrl = null;
 	}
 
-	function handleDropBg(event: DragEvent) {
-		event.preventDefault();
-		bgDragOver = false;
-		if (!event.dataTransfer) return;
-
-		const file = event.dataTransfer.files[0];
-		if (file && file.type.startsWith('image/')) {
-			bgUrl = URL.createObjectURL(file);
-			bgDropped = true;
-			setTimeout(() => (bgDropped = false), 300);
-		}
-	}
-
-	function handleDropFg(event: DragEvent) {
-		event.preventDefault();
-		fgDragOver = false;
-		if (!event.dataTransfer) return;
-
-		const file = event.dataTransfer.files[0];
-		if (file && file.type.startsWith('image/')) {
-			fgUrl = URL.createObjectURL(file);
-		}
-	}
-
-	function allowDropBg(event: DragEvent) {
-		event.preventDefault();
-		bgDragOver = true;
-	}
-
-	function allowDropFg(event: DragEvent) {
-		event.preventDefault();
-		fgDragOver = true;
-	}
-
-	function dragLeaveBg() {
-		bgDragOver = false;
-	}
-
-	function dragLeaveFg() {
-		fgDragOver = false;
-	}
-
-	let containerAspect: number = 0;
-	let containerEl: HTMLDivElement | null = null;
-	let resizeObserver: ResizeObserver | null = null;
-
 	onMount(() => {
 		if (!containerEl) return;
 
 		resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
 			for (const entry of entries) {
 				const { width, height } = entry.contentRect;
-				containerAspect = width / height;
+				const aspect = width / height;
 				// console.log('Updated aspect ratio:', containerAspect);
 
-				if (containerAspect > 1) {
+				if (aspect > 1) {
 					// Landscape layout
 					containerEl!.className =
 						"h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[4fr_9fr] grid-rows-[1fr_auto] gap-4";
@@ -145,7 +129,6 @@
 					// const { width: previewWidth, height: previewHeight } = previewEl.getBoundingClientRect();
 					const previewWidth = previewCardEl.offsetWidth;
 					const previewHeight = previewCardEl.offsetHeight;
-					const previewAspectRatio = previewWidth / previewHeight;
 
 					// get height for image width if vertical layout:
 					let imgHeight = previewWidth / (16.0 / 9.0);
@@ -234,9 +217,9 @@
 							: 'border-2 border-dashed border-gray-300 bg-gray-100'
 				}
       `}
-				ondrop={handleDropBg}
-				ondragover={allowDropBg}
-				ondragleave={dragLeaveBg}
+				ondrop={(e) => handleDrop(e, 'bg')}
+				ondragover={(e) => allowDrop(e, 'bg')}
+				ondragleave={(e) => dragLeave('bg')}
 			>
 				{#if bgUrl}
 					<img
@@ -273,9 +256,9 @@
 							: 'border-2 border-dashed border-gray-300 bg-gray-100'
 				}
       `}
-				ondrop={handleDropFg}
-				ondragover={allowDropFg}
-				ondragleave={dragLeaveFg}
+				ondrop={(e) => handleDrop(e, 'fg')}
+				ondragover={(e) => allowDrop(e, 'fg')}
+				ondragleave={(e) => dragLeave('fg')}
 			>
 				<!-- <div class="object-contain w-full aspect-video bg-amber-300 pointer-events-none"> -->
 				{#if fgUrl}
