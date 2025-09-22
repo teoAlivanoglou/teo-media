@@ -208,7 +208,7 @@
 				role="region"
 				aria-label="Background drop zone"
 				aria-dropeffect="copy"
-				class={`[grid-area:bg] aspect-video w-full max-h-full rounded-xl lg:rounded-2xl overflow-hidden 
+				class={`relative flex items-center justify-center [grid-area:bg] aspect-video w-full max-h-full rounded-xl lg:rounded-2xl overflow-hidden 
         ${
 					bgDragOver
 						? 'border-2 border-dashed border-blue-300 bg-blue-50'
@@ -247,7 +247,7 @@
 				role="region"
 				aria-label="Foreground drop zone"
 				aria-dropeffect="copy"
-				class={`[grid-area:fg] aspect-video w-full max-h-full rounded-xl lg:rounded-2xl overflow-hidden p-0 
+				class={`relative flex items-center justify-center [grid-area:fg] aspect-video w-full max-h-full rounded-xl lg:rounded-2xl overflow-hidden p-0 
         ${
 					fgDragOver
 						? 'border-2 border-dashed border-blue-400 bg-blue-50'
