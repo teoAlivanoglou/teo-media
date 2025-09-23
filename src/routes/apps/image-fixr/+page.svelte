@@ -65,9 +65,16 @@
 	});
 
 	// --- Drag & Drop ---
-	function handleDrop(event: DragEvent, target: 'bg' | 'fg') {
-		event.preventDefault();
-		const file = event.dataTransfer?.files[0];
+	function handleDrop(event: DragEvent | Event, target: 'bg' | 'fg') {
+		event.preventDefault?.();
+
+		let file: File | null = null;
+
+		if (event instanceof DragEvent) {
+			file = event.dataTransfer?.files[0] ?? null;
+		} else if (event instanceof Event && (event.target as HTMLInputElement)?.files) {
+			file = (event.target as HTMLInputElement).files?.[0] ?? null;
+		}
 
 		if (!file || !file.type.startsWith('image/')) return;
 
@@ -140,10 +147,7 @@
 					const imageAreaHorizontal = imgWidth * imgHeight;
 
 					if (imageAreaHorizontal >= imageAreaVertical) {
-						previewEl.classList.remove(
-							`grid-rows-[auto_1fr_1fr]`,
-							`[grid-template-areas:'label''fg''bg']`
-						);
+						previewEl.classList.remove(`grid-rows-[auto_auto]`, `[grid-template-areas:'fg''bg']`);
 						previewEl.classList.add(
 							`grid-rows-[auto_1fr]`,
 							`grid-cols-[1fr_1fr]`,
@@ -155,10 +159,7 @@
 							`grid-cols-[1fr_1fr]`,
 							`[grid-template-areas:'label_label''fg_bg']`
 						);
-						previewEl.classList.add(
-							`grid-rows-[auto_1fr_1fr]`,
-							`[grid-template-areas:'label''fg''bg']`
-						);
+						previewEl.classList.add(`grid-rows-[auto_auto]`, `[grid-template-areas:'fg''bg']`);
 					}
 					// console.log(
 					// 	`Updated preview aspect ratio: ${previewWidth}x${previewHeight}`,
@@ -178,7 +179,7 @@
 
 <div
 	bind:this={containerEl}
-	class="h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[1fr_2fr] grid-rows-[1fr_auto] gap-4"
+	class="h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[1fr_2fr] grid-rows-[1fr_auto] gap-0"
 >
 	<button
 		class="[grid-area:button] bg-blue-500 hover:bg-blue-600 shadow-lg text-white font-semibold py-2 px-4 rounded-2xl transition"
@@ -193,14 +194,14 @@
 	>
 		<div
 			id="previewPane"
-			class="grid grid-rows-[auto_1fr] [grid-template-areas:'label_label''fg_bg'] h-full gap-4 place-items-center"
+			class="grid grid-rows-[auto_1fr] [grid-template-areas:'label_label''fg_bg'] h-full gap-4 place-content-center place-items-center"
 		>
-			<h3
+			<!-- <h3
 				id="previewLabel"
 				class="[grid-area:label] text-lg font-semibold text-gray-800 self-start justify-self-start"
 			>
 				Inputs
-			</h3>
+			</h3> -->
 
 			<!-- Background drop zone -->
 			<div
@@ -237,6 +238,13 @@
 					<div class="flex flex-col items-center text-gray-400 text-sm pointer-events-none">
 						<span class="text-xl mb-1">⬇️</span>
 						<span>Drop background</span>
+						<input
+							type="file"
+							accept="image/*"
+							class="absolute inset-0 opacity-0 cursor-pointer pointer-events-auto z-10"
+							onchange={(e) => handleDrop(e, 'bg')}
+							onclick={(e) => console.log('input clicked')}
+						/>
 					</div>
 				{/if}
 			</div>
@@ -260,7 +268,6 @@
 				ondragover={(e) => allowDrop(e, 'fg')}
 				ondragleave={(e) => dragLeave('fg')}
 			>
-				<!-- <div class="object-contain w-full aspect-video bg-amber-300 pointer-events-none"> -->
 				{#if fgUrl}
 					<img
 						class="object-contain w-full h-full pointer-events-none"
@@ -277,9 +284,15 @@
 					<div class="flex flex-col items-center text-gray-400 text-sm pointer-events-none">
 						<span class="text-xl mb-1">⬇️</span>
 						<span>Drop foreground</span>
+						<input
+							type="file"
+							accept="image/*"
+							class="absolute inset-0 opacity-0 cursor-pointer pointer-events-auto z-10"
+							onchange={(e) => handleDrop(e, 'fg')}
+							onclick={(e) => console.log('input clicked')}
+						/>
 					</div>
 				{/if}
-				<!-- </div> -->
 			</div>
 		</div>
 	</div>
@@ -288,10 +301,10 @@
 	<div
 		class="[grid-area:canvas] bg-white rounded-xl lg:rounded-2xl shadow-lg border border-gray-200 p-4 lg:p-6 flex flex-col relative min-h-0"
 	>
-		<div class="justify-between items-center gap-2 mb-4 flex-shrink-0 hidden md:flex">
+		<!-- <div class="justify-between items-center gap-2 mb-4 flex-shrink-0 hidden md:flex">
 			<h2 class="text-xl font-semibold text-gray-800">Blended Canvas</h2>
 			<span class="text-sm text-gray-500">{info}</span>
-		</div>
+		</div> -->
 
 		<div class="flex-1 flex items-center justify-center min-h-0">
 			<canvas
