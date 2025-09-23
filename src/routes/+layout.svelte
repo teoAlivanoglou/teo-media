@@ -3,18 +3,22 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
 	import { Motion, M } from 'motion-start';
+	import { headerOpen } from '$lib/stores/ui';
 
 	let { children } = $props();
 
 	let windowHeight = $state(0);
-	let headerOpen = $state(false);
+	// let headerOpen = $state(false);
+
+	// const storedHeaderOpen = localStorage.getItem('headerOpen');
+	// let headerOpen = $state(storedHeaderOpen);
 
 	const SMALL_HEIGHT = 500;
 
-	function toggleHeader() {
-		console.log('toggleHeader');
-		headerOpen = !headerOpen;
-	}
+	// function toggleHeader() {
+	// 	console.log('toggleHeader');
+	// 	headerOpen = !(headerOpen === 'true') ? 'true' : 'false';
+	// }
 
 	onMount(() => {
 		const resizeHandler = () => {
@@ -41,10 +45,10 @@
 	<!-- {#if windowHeight < SMALL_HEIGHT} -->
 	<M.button
 		aria-label="Toggle Header"
-		onclick={toggleHeader}
-		class={`absolute top-2 right-2 z-50 p-2 rounded-md 
+		onclick={() => headerOpen.update((v) => !v)}
+		class={`absolute top-1.5 right-2 z-50 p-2 rounded-md 
            ${
-							headerOpen
+							$headerOpen
 								? 'bg-transparent text-white hover:[&>*]:text-cyan-400 transition-colors duration-100 ease-in-out transition-discrete'
 								: 'bg-gray-100/50 text-black hover:[&>*]:stroke-blue-500 transition-colors duration-150 delay-150 ease-in transition-discrete'
 						}
@@ -61,7 +65,7 @@
 		>
 			<M.g>
 				<M.path
-					animate={headerOpen
+					animate={$headerOpen
 						? { d: 'M 5 4 l 14 16 M 12 12 l 0 0 M 19 4 l -14 16' } // closed
 						: { d: 'M 4 6 l 16 0 M 4 12 l 16 0 M 4 18 l 16 0' }}
 					transition={{ duration: 0.3, ease: 'easeInOut' }}
@@ -75,7 +79,7 @@
 	<M.div
 		class="bg-gray-900 text-white shadow-md flex-shrink-0 overflow-hidden"
 		initial={{ height: 0, opacity: 0 }}
-		animate={headerOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
+		animate={$headerOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
 		transition={{ duration: 0.3, ease: 'easeInOut' }}
 	>
 		<div class="flex items-center justify-between px-4 py-3 pr-16 min-h-[3rem]">
