@@ -96,9 +96,7 @@
 	</M.div>
 
 	<!-- Main content -->
-	<main
-		class="flex-1 container flex flex-col mx-auto mt-1 gap-6 py-6 px-2 sm:px-6 min-h-0 overflow-auto"
-	>
+	<main class="flex-1 flex flex-col mx-auto mt-1 gap-6 py-6 px-2 sm:px-6 min-h-0 overflow-auto">
 		{@render children?.()}
 	</main>
 
