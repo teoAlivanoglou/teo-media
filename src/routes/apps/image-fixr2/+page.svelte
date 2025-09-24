@@ -7,8 +7,6 @@
 	import sample_foreground from '$lib/assets/fg.jpg';
 
 	import { DropZone, Slider } from '$lib/controls';
-	import ImageListContainer from '$lib/controls/ImageListContainer.svelte';
-	import ListImage from '$lib/controls/ListImage.svelte';
 
 	// --- State ---
 	let bgUrl = $state<string | null>(sample_background);
@@ -239,15 +237,143 @@
       mask-size: 100% 100%;
     "
 		> -->
-			<ImageListContainer
-				images={[
-					{ id: 'bg', url: bgUrl!, label: 'Background' },
-					{ id: 'fg', url: fgUrl!, label: 'Foreground' }
-				]}
-			>
-				<!-- <ListImage fileUrl={bgUrl} label="Background" onRemove={removeBg} />
-				<ListImage fileUrl={fgUrl} label="Foreground" onRemove={removeFg} /> -->
-			</ImageListContainer>
+			<div class="flex flex-col gap-2">
+				<DropZone
+					label="Background"
+					fileUrl={bgUrl}
+					dragOver={bgDragOver}
+					onDrop={(e) => handleDrop(e, 'bg')}
+					onRemove={removeBg}
+				/>
+
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+				<DropZone
+					label="Foreground"
+					fileUrl={fgUrl}
+					dragOver={fgDragOver}
+					onDrop={(e) => handleDrop(e, 'fg')}
+					onRemove={removeFg}
+				/>
+			</div>
 		</div>
 	</div>
 

@@ -36,6 +36,7 @@
 		"svader": "^0.5.5",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
+		"svelte-dnd-action": "^0.9.65",
 		"tailwindcss": "^4.1.13",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
