@@ -38,7 +38,7 @@
 
 		<!-- Drag handle -->
 		<button
-			class="align-middle cursor-move px-3 py-0 border-y border-gray-200 hover:text-blue-400 transition text-base material-symbols-rounded"
+			class="align-middle cursor-grab px-3 py-0 border-y border-gray-200 hover:text-blue-400 transition text-base material-symbols-rounded"
 			title="Drag to reorder"
 			onpointerdown={(e) => {
 				// ADD

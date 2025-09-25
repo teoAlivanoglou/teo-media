@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { ImageItem } from './ImageListContainer.svelte';
-	import { portal } from '$lib/actions/portal'; // <— add this
+	import { portal } from '$lib/actions/portal';
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
+	import 'overlayscrollbars/overlayscrollbars.css';
 
 	const {
 		open = false,
@@ -15,14 +17,22 @@
 
 	let container: HTMLElement | null = $state(null);
 
-	let ghostX = $state<number>(0); // ADD
-	let ghostY = $state<number>(0); // ADD
-	let ghostItem = $state<ImageItem | null>(null); // ADD
-	let ghostEl: HTMLDivElement | null = $state(null);
-	let raf = 0,
-		px = 0,
-		py = 0;
+	// OverlayScrollbars instance
+	let osComp: any = $state(null);
 
+	// Ghost and pointer
+	let ghostItem = $state<ImageItem | null>(null);
+	let ghostEl: HTMLDivElement | null = $state(null);
+	let raf = 0;
+	let px = 0;
+	let py = 0;
+	let edgeRAF = 0;
+	let lastClientY = 0;
+
+	// Slot alignment offset (kept; set to 0 during free movement)
+	let yOffset = $state(0);
+
+	// Drag state
 	const dragState = $state({
 		dragging: false,
 		itemId: null as string | null,
@@ -31,6 +41,7 @@
 		scrollTop: 0
 	});
 
+	// Visible list excluding the dragged item
 	const filtered = $derived(
 		dragState.dragging && dragState.itemId
 			? items.filter((it) => it.id !== dragState.itemId)
@@ -38,35 +49,104 @@
 	);
 	const filteredLen = $derived(filtered.length);
 
+	// Wire OverlayScrollbars viewport as the "container" for all math/events
+	$effect(() => {
+		if (!osComp) return;
+		const inst = osComp.osInstance?.();
+		if (!inst) return;
+
+		const vp = inst.elements().viewport as HTMLElement;
+		container = vp;
+
+		const handler = () => onScroll();
+		vp.addEventListener('scroll', handler, { passive: true });
+
+		return () => {
+			vp.removeEventListener('scroll', handler);
+			if (container === vp) container = null;
+		};
+	});
+
 	function indexFromPointer(clientY: number): number {
 		if (!container) return 0;
 		const rect = container.getBoundingClientRect();
 		const localY = clientY - rect.top;
-		let idx = Math.floor((dragState.scrollTop + localY) / rowHeight);
+
+		// Natural mapping: scrollTop + localY (no persistent yOffset)
+		let y = dragState.scrollTop + localY;
+
+		let idx = Math.floor(y / rowHeight);
 		if (idx < 0) idx = 0;
 		if (idx > filteredLen) idx = filteredLen;
 		return idx;
 	}
 
 	function onPointerDown(e: PointerEvent, idx: number, id: string) {
-		// Keep this for users who start drag inside overlay
+		// Drag started inside overlay
 		dragState.dragging = true;
 		dragState.itemId = id;
 		dragState.startIndex = idx;
 		dragState.targetIndex = idx;
+
+		if (container) {
+			const rect = container.getBoundingClientRect();
+			const localY = e.clientY - rect.top;
+			const slotCenter = idx * rowHeight + rowHeight / 2;
+			yOffset = slotCenter - (dragState.scrollTop + localY);
+		}
+	}
+
+	function edgeStep() {
+		if (!container || !dragState.dragging) {
+			edgeRAF = 0;
+			return;
+		}
+
+		const rect = container.getBoundingClientRect();
+		const localY = lastClientY - rect.top;
+		const zone = 72; // px
+		let dy = 0;
+
+		if (localY < zone) {
+			const t = (zone - localY) / zone; // 0..1
+			dy = -Math.round(4 + t * 18); // -4..-22 px/frame
+		} else if (localY > rect.height - zone) {
+			const t = (localY - (rect.height - zone)) / zone;
+			dy = Math.round(4 + t * 18); // 4..22 px/frame
+		}
+
+		if (dy !== 0) {
+			const max = container.scrollHeight - container.clientHeight;
+			const next = Math.max(0, Math.min(max, container.scrollTop + dy));
+			if (next !== container.scrollTop) {
+				container.scrollTop = next;
+				dragState.scrollTop = next;
+				// Update target with new scroll
+				dragState.targetIndex = indexFromPointer(lastClientY);
+			}
+			edgeRAF = requestAnimationFrame(edgeStep);
+		} else {
+			edgeRAF = 0;
+		}
 	}
 
 	function onPointerMove(e: PointerEvent) {
 		if (!dragState.dragging) return;
+
 		px = e.clientX;
 		py = e.clientY;
-		if (!raf)
+		lastClientY = e.clientY; // track for edge scroll
+
+		if (!raf) {
 			raf = requestAnimationFrame(() => {
 				if (ghostEl) ghostEl.style.transform = `translate3d(${px - 80}px, ${py - 45}px, 0)`;
 				raf = 0;
 			});
+		}
 
 		dragState.targetIndex = indexFromPointer(e.clientY);
+
+		if (!edgeRAF) edgeRAF = requestAnimationFrame(edgeStep);
 	}
 
 	function commitReorder() {
@@ -85,6 +165,7 @@
 		if (!dragState.dragging) return;
 		dragState.dragging = false;
 		ghostItem = null;
+		yOffset = 0;
 		commitReorder();
 	}
 
@@ -92,28 +173,36 @@
 		if (!dragState.dragging) return;
 		dragState.dragging = false;
 		ghostItem = null;
+		yOffset = 0;
 		onCancel?.();
 	}
 
 	function onScroll() {
 		if (!container) return;
 		dragState.scrollTop = container.scrollTop;
+		yOffset = 0;
 	}
 
+	// Global listeners to end drag even if pointer leaves overlay
 	$effect(() => {
 		if (!open || !dragState.dragging) return;
-		const up = (e: PointerEvent) => {
+
+		const up = () => {
 			if (!dragState.dragging) return;
 			dragState.dragging = false;
 			ghostItem = null;
+			yOffset = 0;
 			commitReorder();
 		};
+
 		const cancel = () => {
 			if (!dragState.dragging) return;
 			dragState.dragging = false;
 			ghostItem = null;
+			yOffset = 0;
 			onCancel?.();
 		};
+
 		window.addEventListener('pointerup', up, true);
 		window.addEventListener('pointercancel', cancel, true);
 		return () => {
@@ -122,24 +211,36 @@
 		};
 	});
 
+	// Start drag from external handle with stable initial alignment (scroll-only)
 	$effect(() => {
-		if (open && initialDragIndex !== null && items[initialDragIndex]) {
+		if (open && initialDragIndex !== null && items[initialDragIndex] && container) {
 			const idx = initialDragIndex;
-			px = initialPointer?.x ?? px;
-			py = initialPointer?.y ?? py;
+
+			// 1) Ghost under pointer instantly
+			if (initialPointer) {
+				px = initialPointer.x;
+				py = initialPointer.y;
+			}
+
+			// 2) Start drag state and ghost
 			dragState.dragging = true;
 			dragState.itemId = items[idx].id;
 			dragState.startIndex = idx;
 			dragState.targetIndex = idx;
 			ghostItem = items[idx];
 
-			// Optional: center the selected row in view
-			if (container) {
-				const targetTop = idx * rowHeight;
-				const desired = targetTop - container.clientHeight / 2 + rowHeight / 2;
-				container.scrollTop = Math.max(0, Math.min(desired, container.scrollHeight));
-				dragState.scrollTop = container.scrollTop;
-			}
+			// 3) Align the slot center with the pointer Y (via scroll; no persistent offset)
+			const rect = container.getBoundingClientRect();
+			const localY = (initialPointer ? initialPointer.y : rect.top + rect.height / 2) - rect.top;
+			const slotCenter = idx * rowHeight + rowHeight / 2;
+
+			const desiredScrollTop = slotCenter - localY;
+			const min = 0;
+			const max = Math.max(0, container.scrollHeight - container.clientHeight);
+			container.scrollTop = Math.min(max, Math.max(min, desiredScrollTop));
+			dragState.scrollTop = container.scrollTop;
+
+			yOffset = 0;
 		}
 
 		if (!open) {
@@ -148,151 +249,93 @@
 			dragState.itemId = null;
 			dragState.startIndex = -1;
 			dragState.targetIndex = -1;
+			yOffset = 0;
 		}
+	});
+
+	// Keep pointermove flowing even if leaving the overlay (global move)
+	$effect(() => {
+		const move = (e: PointerEvent) => onPointerMove(e);
+		window.addEventListener('pointermove', move, true);
+		return () => window.removeEventListener('pointermove', move, true);
 	});
 </script>
 
 {#if open}
 	<div
-		class="overlay"
+		class="fixed inset-0 bg-black/70 z-[2147483646] backdrop-blur-xs pointer-events-none"
+		use:portal
+	></div>
+
+	<div
+		class="fixed top-4 bottom-4 pointer-events-none block z-[2147483647] bg-transparent"
 		role="dialog"
 		aria-modal="true"
 		use:portal
-		style={anchor
-			? `left:${anchor.left}px; top:0px; width:${anchor.width}px; height:100vh;`
-			: `left:0; top:0; width:100vw; height:100vh;`}
+		style={anchor ? `left:${anchor.left}px; width:${anchor.width}px;` : `left:0; width:100vw;`}
 	>
-		<div
-			class="filmstrip"
-			bind:this={container}
-			onscroll={onScroll}
-			onpointermove={onPointerMove}
-			onpointerup={onPointerUp}
-			onpointercancel={onPointerCancel}
+		<OverlayScrollbarsComponent
+			options={{
+				scrollbars: {
+					theme: 'os-theme-light',
+					autoHide: 'never'
+				}
+			}}
+			bind:this={osComp}
+			class="w-full h-full pointer-events-auto rounded-2xl"
+			style="scrollbar-gutter: auto; scroll-behavior: smooth;"
 		>
-			{#if dragState.dragging && dragState.targetIndex === 0}
-				<div class="slot" style="height:6px"></div>
-			{/if}
-			{#each filtered as item, i (item.id)}
-				<!-- row -->
-				<div
-					class="row"
-					style={`height:${rowHeight}px`}
-					onpointerdown={(e) => onPointerDown(e, i, item.id)}
-				>
-					<img class="thumb" src={item.url} alt={item.label ?? 'Image'} />
-					<span class="index-badge">{i + 1}</span>
-				</div>
-				<!-- between rows -->
-				{#if dragState.dragging && dragState.targetIndex === i + 1}
-					<div class="slot" style="height:6px"></div>
+			<div
+				class={`relative z-[1] w-full bg-black/70 p-1.5 backdrop-blur-lg
+				rounded-2xl 
+                ${dragState.dragging ? 'cursor-grabbing' : ''}`}
+				onpointermove={onPointerMove}
+				onpointerup={onPointerUp}
+				onpointercancel={onPointerCancel}
+			>
+				{#if dragState.dragging && dragState.targetIndex === 0}
+					<div
+						class="mx-3 my-0.5 h-1.5 rounded-full bg-blue-400 transition-[height,opacity] duration-150 ease-in-out"
+					></div>
 				{/if}
-			{/each}
-			<!-- end slot -->
-			{#if dragState.dragging && dragState.targetIndex === filtered.length}
-				<div class="slot" style="height:6px"></div>
-			{/if}
-		</div>
+
+				{#each filtered as item, i (item.id)}
+					<div
+						class="flex items-center gap-3 px-3 py-1.5 transition-colors duration-200 ease-in-out"
+						style={`height:${rowHeight}px`}
+						onpointerdown={(e) => onPointerDown(e, i, item.id)}
+					>
+						<img
+							class="w-[160px] h-[90px] flex-none object-cover rounded-lg bg-neutral-800"
+							src={item.url}
+							alt={item.label ?? 'Image'}
+						/>
+
+						<span class="ml-auto text-neutral-400 text-xs">{i + 1}</span>
+					</div>
+
+					{#if dragState.dragging && dragState.targetIndex === i + 1}
+						<div
+							class="mx-3 my-0.5 h-1.5 rounded-full bg-blue-400 transition-[height,opacity] duration-150 ease-in-out"
+						></div>
+					{/if}
+				{/each}
+			</div>
+		</OverlayScrollbarsComponent>
 	</div>
+
 	{#if ghostItem}
 		<div
-			class="ghost"
+			class="fixed left-0 top-0 w-[160px] h-[90px] pointer-events-none will-change-transform opacity-90 drop-shadow-[0_6px_14px_rgba(0,0,0,0.45)] transition-[opacity,transform] duration-75 ease-out z-[2147483647]"
 			use:portal
 			bind:this={ghostEl}
 			style={`transform: translate3d(${px - 80}px, ${py - 45}px, 0);`}
 		>
-			<img class="thumb" src={ghostItem.url} alt={ghostItem.label ?? 'Ghost'} />
+			<img
+				class="w-full h-full object-cover rounded-lg bg-neutral-800"
+				src={ghostItem.url}
+				alt={ghostItem.label ?? 'Ghost'}
+			/>
 		</div>
 	{/if}
 {/if}
-
-<style>
-	.overlay {
-		position: fixed;
-		inset: auto; /* ADD */
-		z-index: 1000;
-		background: transparent; /* ADD: no full-screen dimmer */
-		display: block; /* CHANGE: not centering */
-		pointer-events: none; /* ADD: let only filmstrip capture */
-	}
-	.filmstrip {
-		width: 100%; /* Fills anchor width */
-		height: 100%; /* Thin bar */
-		overflow: auto;
-		background: #0f1115e3; /* Subtle translucency */
-		border-radius: 10px;
-		padding: 6px 0;
-		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-		pointer-events: auto; /* Capture inside */
-		position: relative;
-		z-index: 1;
-	}
-	.row {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		padding: 6px 12px;
-		transition:
-			height 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
-			padding 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
-			background-color 120ms ease;
-	}
-	.thumb {
-		width: 160px;
-		height: 90px;
-		flex: 0 0 auto;
-		object-fit: cover;
-		border-radius: 8px;
-		background: #222;
-	}
-	.thumb.placeholder {
-		background: repeating-linear-gradient(45deg, #1d2430 0 8px, #0f1115 8px 16px);
-	}
-
-	.index-badge {
-		margin-left: auto;
-		color: #9aa0a6;
-		font-size: 12px;
-	}
-	.slot {
-		margin: 2px 12px;
-		border-radius: 999px;
-		background: #6aa3ff;
-		height: 6px;
-		transition:
-			height 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
-			opacity 140ms ease;
-		opacity: 1;
-	}
-	.row {
-		transition:
-			transform 120ms ease,
-			background-color 120ms ease;
-	} /* ADD */
-	.row:hover {
-		background-color: #111722;
-	} /* ADD */
-	.ghost {
-		position: fixed;
-		z-index: 2000;
-		left: 0;
-		top: 0;
-		width: 160px;
-		height: 90px; /* match thumbnail */
-		pointer-events: none;
-		will-change: transform;
-		opacity: 0.9;
-		transform: translate3d(0, 0, 0) scale(1);
-		transition:
-			opacity 120ms ease,
-			transform 120ms ease; /* entry/exit */
-		filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
-	}
-	.ghost img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		border-radius: 8px;
-		background: #222;
-	}
-</style>

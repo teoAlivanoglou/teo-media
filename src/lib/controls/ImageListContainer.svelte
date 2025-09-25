@@ -95,9 +95,6 @@
 	});
 </script>
 
-<button class="reorder-btn" onclick={openReorder} title="Reorder" aria-label="Reorder">
-	Reorder
-</button>
 <ul
 	bind:this={listEl}
 	id="imageList"
@@ -148,22 +145,3 @@
 	onCommit={handleCommit}
 	onCancel={handleCancel}
 />
-
-<style>
-	.list-header {
-		display: flex;
-		justify-content: flex-end;
-		padding: 4px 8px;
-	}
-	.reorder-btn {
-		padding: 6px 10px;
-		background: #1f2937;
-		color: #e5e7eb;
-		border: 1px solid #374151;
-		border-radius: 8px;
-		font-size: 13px;
-	}
-	.reorder-btn:hover {
-		background: #111827;
-	}
-</style>
