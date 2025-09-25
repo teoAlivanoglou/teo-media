@@ -190,7 +190,7 @@
 		<OverlayScrollbarsComponent
 			options={{
 				scrollbars: {
-					theme: 'os-theme-light',
+					theme: 'os-theme-dark',
 					autoHide: 'leave',
 					autoHideDelay: 300,
 					autoHideSuspend: true,
@@ -207,7 +207,10 @@
 			<ImageListContainer
 				images={[
 					{ id: 'bg', url: bgUrl!, label: 'Background' },
-					{ id: 'fg', url: fgUrl!, label: 'Foreground' }
+					{ id: 'fg', url: fgUrl!, label: 'Foreground' },
+					{ id: 'fg2', url: fgUrl!, label: 'Foreground' },
+					{ id: 'fg3', url: fgUrl!, label: 'Foreground' },
+					{ id: 'fg4', url: fgUrl!, label: 'Foreground' }
 				]}
 			></ImageListContainer>
 		</OverlayScrollbarsComponent>

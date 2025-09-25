@@ -1,32 +1,31 @@
 <script lang="ts">
+	export let id: string; // ADD
+	export let index: number; // ADD
+
 	export let label: string;
 	export let fileUrl: string | null = null;
 	export let onRemove: () => void;
 	export let onSettings: () => void = () => {};
 
-	// export let $$restProps;
+	// Callback prop (Svelte 5 style) to notify parent to open overlay
+	export let onReorderDragStart:
+		| undefined
+		| ((id: string, index: number, x: number, y: number) => void) = undefined; // ADD
 </script>
 
 <div
 	role="region"
 	class={`relative 
-	flex flex-row items-stretch justify-center 
-	rounded-xl lg:rounded-2xl overflow-hidden 
-	w-48 lg:w-64 xl:w-80
+    flex flex-row items-stretch justify-center 
+    rounded-xl lg:rounded-2xl overflow-hidden 
+    w-48 lg:w-64 xl:w-80
     border-2 border-solid border-blue-200
-	bg-gray-50
-    ${$$restProps?.class || ''}
-  `}
+    bg-gray-50
+    ${$$restProps?.class || ''}`}
+	draggable="false"
 >
-	<!-- <div
-	role="region"
-	class={`relative flex items-center justify-center rounded-xl lg:rounded-2xl overflow-hidden w-48 lg:w-64 xl:w-80 scroll-m-0
-    border-2 border-solid border-blue-200 
-	bg-[repeating-conic-gradient(from_1deg,theme(colors.gray.200)_0_25%,theme(colors.white)_0_50%)] 
-	bg-size-[4ch_4ch]
-    ${$$restProps?.class || ''}
-  `}
-> -->
+	<!-- ADD: avoid native DnD -->
+
 	<div class=" grid grid-rows-[1fr_2fr_1fr] h-auto border-r border-gray-200">
 		<!-- Remove -->
 		<button
@@ -41,6 +40,12 @@
 		<button
 			class="align-middle cursor-move px-3 py-0 border-y border-gray-200 hover:text-blue-400 transition text-base material-symbols-rounded"
 			title="Drag to reorder"
+			onpointerdown={(e) => {
+				// ADD
+				e.preventDefault();
+				e.stopPropagation();
+				onReorderDragStart?.(id, index, e.clientX, e.clientY);
+			}}
 		>
 			menu
 		</button>
@@ -58,39 +63,9 @@
 	<div class="flex-grow w-full aspect-video">
 		<img
 			src={fileUrl}
-			class=" object-contain pointer-events-none w-full h-full"
+			class=" object-contain pointer-events-none w-full h-full select-none"
+			draggable="false"
 			alt={`${label} Preview`}
 		/>
 	</div>
-
-	<!-- <button
-		class="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:bg-gray-200 transition text-sm"
-		on:click={onRemove}
-	>
-		✕
-	</button> -->
-	<!-- <div class="absolute top-2 right-2 flex items-center gap-1">
-		<button
-			class="cursor-move bg-white rounded-full p-1 hover:bg-gray-200 transition text-sm"
-			title="Drag to reorder"
-		>
-			☰
-		</button>
-
-		<button
-			class="bg-white rounded-full p-1 hover:bg-gray-200 transition text-sm"
-			on:click={onSettings}
-			title="Settings"
-		>
-			⚙
-		</button>
-
-		<button
-			class="bg-white rounded-full p-1 hover:bg-red-200 transition text-sm"
-			on:click={onRemove}
-			title="Remove"
-		>
-			✕
-		</button>
-	</div> -->
 </div>

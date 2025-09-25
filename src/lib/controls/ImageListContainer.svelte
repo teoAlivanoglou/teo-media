@@ -3,8 +3,9 @@
 	import ListImage from './ListImage.svelte';
 	import ListPlaceholder from './ListPlaceholder.svelte';
 	import { onMount } from 'svelte';
+	import ReorderOverlay from './ReorderOverlay.svelte';
 
-	type ImageItem = { id: string; url: string; label: string };
+	export type ImageItem = { id: string; url: string; label: string };
 
 	let { images = [], children }: { images?: ImageItem[]; children?: any } = $props();
 
@@ -39,21 +40,78 @@
 		if (img) URL.revokeObjectURL(img.url);
 		images = images.filter((i) => i.id !== id);
 	}
+
+	let overlayOpen = $state(false);
+	let initialDragIndex = $state<number | null>(null); // ADD
+	let initialPointer = $state<{ x: number; y: number } | null>(null);
+	const rowHeight = 96; // align with overlay tile size
+
+	let listEl: HTMLElement | null = $state(null); // ADD
+	let overlayAnchor = $state<{ left: number; top: number; width: number } | null>(null); // ADD
+
+	function updateOverlayAnchor() {
+		// ADD
+		if (!listEl) return;
+		const r = listEl.getBoundingClientRect();
+		overlayAnchor = { left: r.left, top: r.top, width: r.width };
+	}
+
+	function openReorder() {
+		if (!images?.length) return;
+		updateOverlayAnchor();
+		overlayOpen = true;
+		initialDragIndex = null;
+	}
+
+	function handleReorderDragStart(id: string, index: number, x: number, y: number) {
+		if (!images?.length) return;
+		updateOverlayAnchor();
+		initialDragIndex = index;
+		initialPointer = { x, y };
+		overlayOpen = true;
+	}
+
+	function handleCommit(next: ImageItem[]) {
+		images = next;
+		overlayOpen = false;
+		initialDragIndex = null;
+	}
+
+	function handleCancel() {
+		overlayOpen = false;
+		initialDragIndex = null;
+	}
+
+	$effect(() => {
+		if (!overlayOpen) return;
+		const h = () => updateOverlayAnchor();
+		updateOverlayAnchor();
+		window.addEventListener('resize', h);
+		window.addEventListener('scroll', h, true); // capture scrolls in ancestors
+		return () => {
+			window.removeEventListener('resize', h);
+			window.removeEventListener('scroll', h, true);
+		};
+	});
 </script>
 
+<button class="reorder-btn" onclick={openReorder} title="Reorder" aria-label="Reorder">
+	Reorder
+</button>
 <ul
+	bind:this={listEl}
 	id="imageList"
 	role="listbox"
 	tabindex="0"
 	aria-label={'Image list drop zone'}
 	aria-dropeffect="copy"
-	class="flex flex-col gap-0 bg-red-500"
+	class="flex flex-col gap-0"
 	ondrop={handleDrop}
 	ondragover={(e) => e.preventDefault()}
 >
 	{@render children?.()}
 
-	{#each images as image (image.id)}
+	{#each images as image, i (image.id)}
 		<!-- <li class="bg-blue-400 py-1 px-[max(calc(var(--spacing)*5),var(--scrollbar-width))]">
 			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
 		</li> -->
@@ -62,11 +120,50 @@
 		>
 			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
 		</li> -->
-		<li class="bg-blue-400 py-1 px-4">
-			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
+		<li class=" py-1 px-4">
+			<ListImage
+				id={image.id}
+				index={i}
+				fileUrl={image.url}
+				label={image.label}
+				onRemove={() => removeImage(image.id)}
+				onReorderDragStart={handleReorderDragStart}
+			/>
 		</li>
 	{/each}
 
 	<!-- Placeholder uploader -->
-	<ListPlaceholder onFiles={handleFiles} />
+	<div class="py-1 px-4">
+		<ListPlaceholder onFiles={handleFiles} />
+	</div>
 </ul>
+
+<ReorderOverlay
+	open={overlayOpen}
+	items={images}
+	rowHeight={96}
+	{initialDragIndex}
+	{initialPointer}
+	anchor={overlayAnchor}
+	onCommit={handleCommit}
+	onCancel={handleCancel}
+/>
+
+<style>
+	.list-header {
+		display: flex;
+		justify-content: flex-end;
+		padding: 4px 8px;
+	}
+	.reorder-btn {
+		padding: 6px 10px;
+		background: #1f2937;
+		color: #e5e7eb;
+		border: 1px solid #374151;
+		border-radius: 8px;
+		font-size: 13px;
+	}
+	.reorder-btn:hover {
+		background: #111827;
+	}
+</style>
