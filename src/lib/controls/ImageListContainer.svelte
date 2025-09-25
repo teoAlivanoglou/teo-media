@@ -2,6 +2,7 @@
 	import { dndzone } from 'svelte-dnd-action';
 	import ListImage from './ListImage.svelte';
 	import ListPlaceholder from './ListPlaceholder.svelte';
+	import { onMount } from 'svelte';
 
 	type ImageItem = { id: string; url: string; label: string };
 
@@ -40,21 +41,32 @@
 	}
 </script>
 
-<div
+<ul
+	id="imageList"
 	role="listbox"
 	tabindex="0"
 	aria-label={'Image list drop zone'}
 	aria-dropeffect="copy"
-	class="flex flex-col gap-2"
+	class="flex flex-col gap-0 bg-red-500"
 	ondrop={handleDrop}
 	ondragover={(e) => e.preventDefault()}
 >
 	{@render children?.()}
 
 	{#each images as image (image.id)}
-		<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
+		<!-- <li class="bg-blue-400 py-1 px-[max(calc(var(--spacing)*5),var(--scrollbar-width))]">
+			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
+		</li> -->
+		<!-- <li
+			class="bg-blue-400 py-1 pl-[var(--list-container-padding-left)] pr-[var(--list-container-padding-right)]"
+		>
+			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
+		</li> -->
+		<li class="bg-blue-400 py-1 px-4">
+			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
+		</li>
 	{/each}
 
 	<!-- Placeholder uploader -->
 	<ListPlaceholder onFiles={handleFiles} />
-</div>
+</ul>

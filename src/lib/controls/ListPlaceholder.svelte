@@ -25,7 +25,7 @@
     ${$$restProps?.class || ''}
   `}
 >
-	<span class="text-xl mb-1">➕</span>
+	<span class="text-4xl material-symbols-rounded bold">add</span>
 	<span>Drop or upload image</span>
 	<input
 		type="file"

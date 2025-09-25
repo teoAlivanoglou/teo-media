@@ -9,6 +9,9 @@
 	import { DropZone, Slider } from '$lib/controls';
 	import ImageListContainer from '$lib/controls/ImageListContainer.svelte';
 	import ListImage from '$lib/controls/ListImage.svelte';
+	import 'overlayscrollbars/overlayscrollbars.css';
+	// @ts-ignore
+	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
 	// --- State ---
 	let bgUrl = $state<string | null>(sample_background);
@@ -23,6 +26,7 @@
 
 	let canvasEl!: HTMLCanvasElement;
 	let containerEl: HTMLDivElement | null = null;
+	let previewCardEl: any | null = null;
 
 	let renderer = $state<WebGLRenderer | null>(null);
 	let resizeObserver: ResizeObserver | null = null;
@@ -116,59 +120,31 @@
 	}
 
 	onMount(() => {
+		if (!previewCardEl) return;
+
+		// const osInstance = OverlayScrollbars(previewCardEl, {});
+		// osInstance.plugin([SizeObserverPlugin, ClickScrollPlugin]);
+
 		if (!containerEl) return;
-
 		resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-			for (const entry of entries) {
-				const { width, height } = entry.contentRect;
-				const aspect = width / height;
-				// console.log('Updated aspect ratio:', containerAspect);
-
-				if (aspect > 1) {
-					// Landscape layout
-					containerEl!.className =
-						"h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[auto_1fr] grid-rows-[1fr_auto] gap-4";
-				} else {
-					// Portrait layout
-					containerEl!.className =
-						"h-full grid [grid-template-areas:'canvas''previews''button'] grid-cols-1 grid-rows-[auto_1fr_auto] gap-4";
-				}
-
-				const previewEl = document.getElementById('previewPane');
-				const previewCardEl = document.getElementById('previewCard');
-				if (previewEl && previewCardEl) {
-					// const { width: previewWidth, height: previewHeight } = previewEl.getBoundingClientRect();
-					const previewWidth = previewCardEl.offsetWidth;
-					const previewHeight = previewCardEl.offsetHeight;
-
-					// get height for image width if vertical layout:
-					let imgHeight = previewWidth / (16.0 / 9.0);
-					const imageAreaVertical = imgHeight * previewHeight;
-
-					// get width for image height if horizontal layout:
-					const imgWidth = previewWidth / 2;
-					imgHeight = imgWidth * (16.0 / 9.0);
-					const imageAreaHorizontal = imgWidth * imgHeight;
-
-					if (imageAreaHorizontal >= imageAreaVertical) {
-						previewEl.classList.remove(`grid-rows-[auto_auto]`, `[grid-template-areas:'fg''bg']`);
-						previewEl.classList.add(
-							`grid-rows-[auto_1fr]`,
-							`grid-cols-[1fr_1fr]`,
-							`[grid-template-areas:'label_label''fg_bg']`
-						);
-					} else {
-						previewEl.classList.remove(
-							`grid-rows-[auto_1fr]`,
-							`grid-cols-[1fr_1fr]`,
-							`[grid-template-areas:'label_label''fg_bg']`
-						);
-						previewEl.classList.add(`grid-rows-[auto_auto]`, `[grid-template-areas:'fg''bg']`);
+			requestAnimationFrame(() => {
+				for (const entry of entries) {
+					if (entry.target === containerEl) {
+						const vs = containerEl.scrollHeight > containerEl.clientHeight;
+						if (vs) {
+							const scrollbarSize = containerEl.offsetWidth - containerEl.clientWidth;
+							document.body.style.setProperty(
+								'--list-container-padding-offset',
+								scrollbarSize / 2 + 'px'
+							);
+						} else {
+							document.body.style.setProperty('--list-container-padding-offset', '0px');
+						}
 					}
 				}
-			}
+			});
 		});
-
+		if (previewCardEl) resizeObserver.observe(previewCardEl);
 		resizeObserver.observe(containerEl);
 	});
 
@@ -185,11 +161,15 @@
 			});
 		}
 	}
+
+	function imageListContainerResized() {
+		console.log('Resized something');
+	}
 </script>
 
 <div
 	bind:this={containerEl}
-	class="h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[auto_1fr] grid-rows-[1fr_auto] gap-0"
+	class="h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[auto_1fr] grid-rows-[1fr_auto] gap-4"
 >
 	<button
 		class="[grid-area:button] bg-blue-500 hover:bg-blue-600
@@ -207,48 +187,30 @@
 	>
 		<h2 class="text-xl font-semibold mb-2 text-gray-800 text-center">Inputs</h2>
 
-		<div
+		<OverlayScrollbarsComponent
+			options={{
+				scrollbars: {
+					theme: 'os-theme-light',
+					autoHide: 'leave',
+					autoHideDelay: 300,
+					autoHideSuspend: true,
+					visibility: 'auto'
+				}
+			}}
+			defer
+			bind:this={previewCardEl}
 			id="previewCard"
-			class="h-full w-full overflow-y-auto overflow-x-hidden px-0"
-			style="scrollbar-gutter: stable both-edges; scroll-behavior: smooth;"
+			data-overlayscrollbars-initialize
+			class="h-full w-full overflow-y-auto overflow-x-hidden data-simplebar"
+			style="scrollbar-gutter: auto; scroll-behavior: smooth;"
 		>
-			<!-- <div
-		id="previewCard"
-		class="[grid-area:previews] bg-white shadow-lg border border-gray-200 rounded-xl lg:rounded-2xl min-h-0 overflow-hidden"
-	> -->
-			<!-- <div
-			class=" h-full w-full overflow-y-auto p-2 snap-y snap-pt-16"
-			style="
-      -webkit-mask-image: linear-gradient(
-  to bottom,
-  transparent 0.3rem,
-  black 0.8rem,
-  black calc(100% - 0.8rem),
-  transparent calc(100% - 0.3rem)
-);
-      -webkit-mask-repeat: no-repeat;
-      -webkit-mask-size: 100% 100%;
-      mask-image: linear-gradient(
-  to bottom,
-  transparent 0.3rem,
-  black 0.8rem,
-  black calc(100% - 0.8rem),
-  transparent calc(100% - 0.3rem)
-);
-      mask-repeat: no-repeat;
-      mask-size: 100% 100%;
-    "
-		> -->
 			<ImageListContainer
 				images={[
 					{ id: 'bg', url: bgUrl!, label: 'Background' },
 					{ id: 'fg', url: fgUrl!, label: 'Foreground' }
 				]}
-			>
-				<!-- <ListImage fileUrl={bgUrl} label="Background" onRemove={removeBg} />
-				<ListImage fileUrl={fgUrl} label="Foreground" onRemove={removeFg} /> -->
-			</ImageListContainer>
-		</div>
+			></ImageListContainer>
+		</OverlayScrollbarsComponent>
 	</div>
 
 	<!-- Canvas card -->

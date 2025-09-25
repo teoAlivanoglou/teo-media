@@ -7,12 +7,58 @@
 		'FILL' 0,
 		'wght' 300,
 		'GRAD' 48,
-		'opsz' 72;
+		'opsz' 64;
 
 	font-size: 1em;
 }
 
-@theme {
+.material-symbols-rounded.bold {
+	font-variation-settings:
+		'FILL' 0,
+		'wght' 900,
+		'GRAD' 48,
+		'opsz' 72;
+
+	font-size: 2em;
+}
+
+.scrollbar-measure {
+	width: 100px;
+	height: 100px;
+	overflow: scroll;
+	position: absolute;
+	top: -9999px;
+}
+
+body {
+	--list-container-padding-offset: 0px;
+	--list-container-padding-left: calc(
+		var(--spacing) * 4 - 1 * (var(--list-container-padding-offset))
+	);
+	--list-container-padding-right: calc(
+		var(--spacing) * 4 - 1 * (var(--list-container-padding-offset))
+	);
+}
+
+/* #previewCard::-webkit-scrollbar {
+	width: 12px;
+}
+
+#previewCard::-webkit-scrollbar-thumb {
+	background-color: rgba(0, 0, 0, 0.4);
+	border-radius: 10rem;
+	border: 1px solid #fff;
+}
+
+#previewCard::-webkit-scrollbar-track-piece:start {
+	background: transparent;
+}
+
+#previewCard::-webkit-scrollbar-track-piece:end {
+	background: transparent;
+} */
+
+/* @theme {
 	--font-display: 'Satoshi', 'sans-serif';
 	--breakpoint-3xl: 1920px;
 	--color-avocado-100: oklch(0.99 0 0);
@@ -23,5 +69,4 @@
 	--color-avocado-600: oklch(0.53 0.12 118.34);
 	--ease-fluid: cubic-bezier(0.3, 0, 0, 1);
 	--ease-snappy: cubic-bezier(0.2, 0, 0, 1);
-	/* ... */
-}
+} */

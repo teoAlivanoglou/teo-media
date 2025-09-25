@@ -21,12 +21,22 @@
 	// }
 
 	onMount(() => {
+		var scrollDiv = document.createElement('div');
+		scrollDiv.className = 'scrollbar-measure';
+		document.body.appendChild(scrollDiv);
+
+		var scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+
+		console.log(
+			`'scrollbarWidth =  ${scrollDiv.offsetWidth} - ${scrollDiv.clientWidth}'`,
+			scrollbarWidth
+		);
+		document.body.removeChild(scrollDiv);
+
+		document.body.style.setProperty('--scrollbar-width', scrollbarWidth + 'px');
+
 		const resizeHandler = () => {
 			windowHeight = window.innerHeight;
-		};
-		window.addEventListener('resize', resizeHandler);
-		return () => {
-			window.removeEventListener('resize', resizeHandler);
 		};
 	});
 </script>
