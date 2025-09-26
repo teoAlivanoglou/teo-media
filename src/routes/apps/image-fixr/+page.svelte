@@ -172,8 +172,8 @@
 	class="h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[auto_1fr] grid-rows-[1fr_auto] gap-4"
 >
 	<button
-		class="[grid-area:button] bg-blue-500 hover:bg-blue-600
-		shadow-lg text-white font-semibold py-2 px-4 rounded-2xl transition"
+		class="[grid-area:button] bg-accent hover:bg-accent-hover
+		shadow-lg text-foreground-inverse font-semibold py-2 px-4 rounded-2xl transition"
 	>
 		Download
 	</button>
@@ -183,9 +183,9 @@
 		id="previewCardWrapper"
 		class="[grid-area:previews]
 		flex flex-col
-		bg-white shadow-lg border border-gray-200 rounded-2xl overflow-hidden py-2"
+		bg-background shadow-lg border border-border rounded-2xl overflow-hidden py-2"
 	>
-		<h2 class="text-xl font-semibold mb-2 text-gray-800 text-center">Inputs</h2>
+		<h2 class="text-xl font-semibold mb-2 text-foreground text-center">Inputs</h2>
 
 		<OverlayScrollbarsComponent
 			options={{
@@ -234,19 +234,19 @@
 
 	<!-- Canvas card -->
 	<div
-		class="[grid-area:canvas] bg-white rounded-xl lg:rounded-2xl shadow-lg border border-gray-200 p-4 lg:p-6 flex flex-col relative min-h-0"
+		class="[grid-area:canvas] bg-background rounded-xl lg:rounded-2xl shadow-lg border border-border p-4 lg:p-6 flex flex-col relative min-h-0"
 	>
 		<div class="flex-1 flex items-center justify-center min-h-0">
 			<canvas
 				bind:this={canvasEl}
 				width="1920"
 				height="1080"
-				class="max-w-full max-h-full object-contain rounded-xl bg-gray-900"
+				class="max-w-full max-h-full object-contain rounded-xl bg-transparent"
 			></canvas>
 		</div>
 
 		<div
-			class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-3 flex items-center gap-3"
+			class="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg border border-border p-3 flex items-center gap-3"
 		>
 			<Slider
 				value={mix}

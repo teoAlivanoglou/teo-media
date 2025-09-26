@@ -20,8 +20,8 @@
 <div
 	role="region"
 	class={`relative flex flex-col items-center justify-center aspect-video rounded-xl lg:rounded-2xl overflow-hidden w-48 lg:w-64 xl:w-80 scroll-m-0
-    border-2 border-dashed border-gray-300 bg-gray-100 text-gray-400 text-sm cursor-pointer
-      hover:border-blue-400 hover:bg-blue-50 transition 
+    border-2 border-dashed border-border bg-card text-foreground-fainter text-sm cursor-pointer
+      hover:border-border-accent hover:bg-accent-fainter transition 
     ${$$restProps?.class || ''}
   `}
 >
