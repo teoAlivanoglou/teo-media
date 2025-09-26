@@ -263,7 +263,7 @@
 
 {#if open}
 	<div
-		class="fixed inset-0 bg-black/70 z-[2147483646] backdrop-blur-xs pointer-events-none"
+		class="fixed inset-0 bg-background-inverse/70 z-[2147483646] backdrop-blur-xs pointer-events-none"
 		use:portal
 	></div>
 
@@ -286,7 +286,7 @@
 			style="scrollbar-gutter: auto; scroll-behavior: smooth;"
 		>
 			<div
-				class={`relative z-[1] w-full bg-black/70 p-1.5 backdrop-blur-lg
+				class={`relative z-[1] w-full bg-background-inverse/70 p-1.5 backdrop-blur-lg
 				rounded-2xl 
                 ${dragState.dragging ? 'cursor-grabbing' : ''}`}
 				onpointermove={onPointerMove}
@@ -295,7 +295,7 @@
 			>
 				{#if dragState.dragging && dragState.targetIndex === 0}
 					<div
-						class="mx-3 my-0.5 h-1.5 rounded-full bg-blue-400 transition-[height,opacity] duration-150 ease-in-out"
+						class="mx-3 my-0.5 h-1.5 rounded-full bg-accent-inverse transition-[height,opacity] duration-150 ease-in-out"
 					></div>
 				{/if}
 
@@ -316,7 +316,7 @@
 
 					{#if dragState.dragging && dragState.targetIndex === i + 1}
 						<div
-							class="mx-3 my-0.5 h-1.5 rounded-full bg-blue-400 transition-[height,opacity] duration-150 ease-in-out"
+							class="mx-3 my-0.5 h-1.5 rounded-full bg-accent-inverse transition-[height,opacity] duration-150 ease-in-out"
 						></div>
 					{/if}
 				{/each}
@@ -332,7 +332,7 @@
 			style={`transform: translate3d(${px - 80}px, ${py - 45}px, 0);`}
 		>
 			<img
-				class="w-full h-full object-cover rounded-lg bg-neutral-800"
+				class="w-full h-full object-cover rounded-lg"
 				src={ghostItem.url}
 				alt={ghostItem.label ?? 'Ghost'}
 			/>

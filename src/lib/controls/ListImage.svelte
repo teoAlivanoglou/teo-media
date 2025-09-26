@@ -19,17 +19,17 @@
     flex flex-row items-stretch justify-center 
     rounded-xl lg:rounded-2xl overflow-hidden 
     w-48 lg:w-64 xl:w-80
-    border-2 border-solid border-blue-200
-    bg-gray-50
+    border-2 border-solid border-border-accent
+    bg-card
     ${$$restProps?.class || ''}`}
 	draggable="false"
 >
 	<!-- ADD: avoid native DnD -->
 
-	<div class=" grid grid-rows-[1fr_2fr_1fr] h-auto border-r border-gray-200">
+	<div class=" grid grid-rows-[1fr_2fr_1fr] h-auto border-r border-border">
 		<!-- Remove -->
 		<button
-			class=" px-3 hover:text-blue-400 transition material-symbols-rounded text-base"
+			class=" px-3 hover:text-red-400 transition material-symbols-rounded text-base"
 			onclick={onRemove}
 			title="Remove"
 		>
@@ -38,7 +38,7 @@
 
 		<!-- Drag handle -->
 		<button
-			class="align-middle cursor-grab px-3 py-0 border-y border-gray-200 hover:text-blue-400 transition text-base material-symbols-rounded"
+			class="align-middle cursor-grab px-3 py-0 border-y border-border hover:text-accent transition text-base material-symbols-rounded"
 			title="Drag to reorder"
 			onpointerdown={(e) => {
 				// ADD
@@ -52,7 +52,7 @@
 
 		<!-- Settings -->
 		<button
-			class=" px-3 py-0 hover:text-blue-400 transition text-base material-symbols-rounded"
+			class=" px-3 py-0 hover:text-accent transition text-base material-symbols-rounded"
 			onclick={onSettings}
 			title="Settings"
 		>

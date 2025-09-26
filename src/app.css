@@ -40,6 +40,96 @@ body {
 	);
 }
 
+@theme {
+	--font-display: 'Satoshi', 'sans-serif';
+	--breakpoint-3xl: 1920px;
+	--color-avocado-100: oklch(0.99 0 0);
+	--color-avocado-200: oklch(0.98 0.04 113.22);
+	--color-avocado-300: oklch(0.94 0.11 115.03);
+	--color-avocado-400: oklch(0.92 0.19 114.08);
+	--color-avocado-500: oklch(0.84 0.18 117.33);
+	--color-avocado-600: oklch(0.53 0.12 118.34);
+	--ease-fluid: cubic-bezier(0.3, 0, 0, 1);
+	--ease-snappy: cubic-bezier(0.2, 0, 0, 1);
+
+	--color-accent-light: var(--color-blue-500);
+	--color-accent-fainter-light: var(--color-blue-50);
+	--color-accent-hover-light: var(--color-blue-600);
+	--color-background-light: var(--color-white);
+	--color-foreground-light: var(--color-gray-800); /* check if 800 is better than 950 */
+	--color-foreground-faint-light: var(--color-gray-600);
+	--color-foreground-fainter-light: var(--color-gray-400);
+	--color-card-light: var(--color-gray-50);
+	--color-border-light: var(--color-gray-200);
+	--color-border-accent-light: var(--color-blue-200);
+	--color-accent-dark: var(--color-cyan-400);
+	--color-accent-fainter-dark: var(--color-cyan-50);
+	--color-accent-hover-dark: var(--color-cyan-500);
+	--color-background-dark: var(--color-gray-900);
+	--color-foreground-dark: var(--color-gray-50);
+	--color-foreground-faint-dark: var(--color-gray-300);
+	--color-foreground-fainter-dark: var(--color-gray-600);
+	--color-card-dark: var(--color-gray-800);
+	--color-border-dark: var(--color-gray-700);
+	--color-border-accent-dark: var(--color-cyan-200);
+	--color-accent: var(--color-accent-light);
+	--color-accent-inverse: var(--color-accent-dark);
+	--color-accent-fainter: var(--color-accent-fainter-light);
+	--color-accent-fainter-inverse: var(--color-accent-fainter-dark);
+	--color-accent-hover: var(--color-accent-hover-light);
+	--color-accent-hover-inverse: var(--color-accent-hover-dark);
+	--color-background: var(--color-background-light);
+	--color-background-inverse: var(--color-background-dark);
+	--color-foreground: var(--color-foreground-light);
+	--color-foreground-inverse: var(--color-foreground-dark);
+	--color-foreground-faint: var(--color-foreground-faint-light);
+	--color-foreground-faint-inverse: var(--color-foreground-faint-dark);
+	--color-foreground-fainter: var(--color-foreground-fainter-light);
+	--color-foreground-fainter-inverse: var(--color-foreground-fainter-dark);
+	--color-card: var(--color-card-light);
+	--color-card-innverse: var(--color-card-dark);
+	--color-border: var(--color-border-light);
+	--color-border-inverse: var(--color-border-dark);
+	--color-border-accent: var(--color-border-accent-light);
+	--color-border-accent-inverse: var(--color-border-accent-dark);
+}
+
+/* TODO: CONSIDER USING DAISYUI INSTEAD! */
+
+/* @media (prefers-color-scheme: light) {
+	:root:not(.light):not([data-theme='light']) {
+		--color-accent: var(--color-accent-dark);
+		--color-accent-inverse: var(--color-accent-light);
+
+		--color-accent-fainter: var(--color-accent-fainter-dark);
+		--color-accent-fainter-inverse: var(--color-accent-fainter-light);
+
+		--color-accent-hover: var(--color-accent-hover-dark);
+		--color-accent-hover-inverse: var(--color-accent-hover-light);
+
+		--color-background: var(--color-background-dark);
+		--color-background-inverse: var(--color-background-light);
+
+		--color-foreground: var(--color-foreground-dark);
+		--color-foreground-inverse: var(--color-foreground-light);
+
+		--color-foreground-faint: var(--color-foreground-faint-dark);
+		--color-foreground-faint-inverse: var(--color-foreground-faint-light);
+
+		--color-foreground-fainter: var(--color-foreground-fainter-dark);
+		--color-foreground-fainter-inverse: var(--color-foreground-fainter-light);
+
+		--color-card: var(--color-card-dark);
+		--color-card-innverse: var(--color-card-light);
+
+		--color-border: var(--color-border-dark);
+		--color-border-inverse: var(--color-border-light);
+
+		--color-border-accent: var(--color-border-accent-dark);
+		--color-border-accent-inverse: var(--color-border-accent-light);
+	}
+} */
+
 /* #previewCard::-webkit-scrollbar {
 	width: 12px;
 }
@@ -56,17 +146,4 @@ body {
 
 #previewCard::-webkit-scrollbar-track-piece:end {
 	background: transparent;
-} */
-
-/* @theme {
-	--font-display: 'Satoshi', 'sans-serif';
-	--breakpoint-3xl: 1920px;
-	--color-avocado-100: oklch(0.99 0 0);
-	--color-avocado-200: oklch(0.98 0.04 113.22);
-	--color-avocado-300: oklch(0.94 0.11 115.03);
-	--color-avocado-400: oklch(0.92 0.19 114.08);
-	--color-avocado-500: oklch(0.84 0.18 117.33);
-	--color-avocado-600: oklch(0.53 0.12 118.34);
-	--ease-fluid: cubic-bezier(0.3, 0, 0, 1);
-	--ease-snappy: cubic-bezier(0.2, 0, 0, 1);
 } */

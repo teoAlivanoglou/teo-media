@@ -50,7 +50,7 @@
 	/>
 </svelte:head>
 
-<div class="h-screen flex flex-col bg-gray-100 min-h-0">
+<div class="h-screen flex flex-col bg-background min-h-0">
 	<!-- Hamburger toggle -->
 	<!-- {#if windowHeight < SMALL_HEIGHT} -->
 	<M.button
@@ -59,8 +59,8 @@
 		class={`absolute top-1.5 right-2 z-50 p-2 rounded-md 
            ${
 							$headerOpen
-								? 'bg-transparent text-white hover:[&>*]:text-cyan-400 transition-colors duration-100 ease-in-out transition-discrete'
-								: 'bg-gray-100/50 text-black hover:[&>*]:stroke-blue-500 transition-colors duration-150 delay-150 ease-in transition-discrete'
+								? 'bg-transparent text-foreground-inverse hover:[&>*]:stroke-accent-inverse transition-colors duration-100 ease-in-out transition-discrete'
+								: 'bg-background/50 text-foreground hover:[&>*]:stroke-accent transition-colors duration-150 delay-150 ease-in transition-discrete'
 						}
            `}
 	>
@@ -87,7 +87,7 @@
 
 	<!-- Header -->
 	<M.div
-		class="bg-gray-900 text-white shadow-md flex-shrink-0 overflow-hidden"
+		class="bg-background-inverse text-foreground-inverse shadow-md flex-shrink-0 overflow-hidden"
 		initial={{ height: 0, opacity: 0 }}
 		animate={$headerOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
 		transition={{ duration: 0.3, ease: 'easeInOut' }}
@@ -95,11 +95,11 @@
 		<div class="flex items-center justify-between px-4 py-3 pr-16 min-h-[3rem]">
 			<span class="font-bold tracking-wide">Media Toolbox</span>
 			<nav class="flex gap-8 text-base">
-				<a href="/apps" class="hover:text-cyan-400 transition">Apps</a>
+				<a href="/apps" class="hover:text-accent-inverse transition">Apps</a>
 				<a
 					href="https://github.com/yourproject"
 					target="_blank"
-					class="hover:text-cyan-400 transition">GitHub</a
+					class="hover:text-accent-inverse transition">GitHub</a
 				>
 			</nav>
 		</div>
@@ -112,7 +112,9 @@
 
 	<!-- Footer -->
 	{#if windowHeight >= SMALL_HEIGHT}
-		<footer class="px-8 py-3 bg-gray-800 text-right text-gray-300 text-sm shadow-md flex-shrink-0">
+		<footer
+			class="px-8 py-3 bg-background-inverse text-right text-foreground-inverse text-sm shadow-md flex-shrink-0"
+		>
 			&copy; {new Date().getFullYear()} Media Toolbox &mdash; Built with SvelteKit
 		</footer>
 	{/if}
