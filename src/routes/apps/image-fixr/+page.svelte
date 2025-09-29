@@ -197,7 +197,7 @@
 		<OverlayScrollbarsComponent
 			options={{
 				scrollbars: {
-					theme: 'os-theme-light os-theme-custom',
+					theme: 'os-theme-dark os-theme-custom',
 					autoHide: 'never',
 					autoHideDelay: 300,
 					autoHideSuspend: true,
