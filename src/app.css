@@ -1,6 +1,9 @@
 @import 'tailwindcss' important;
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+@plugin "daisyui" {
+	themes: all;
+}
 
 .material-symbols-rounded {
 	font-variation-settings:
@@ -40,7 +43,7 @@ body {
 	);
 }
 
-@theme {
+/* @theme {
 	--font-display: 'Satoshi', 'sans-serif';
 	--breakpoint-3xl: 1920px;
 	--color-avocado-100: oklch(0.99 0 0);
@@ -56,7 +59,7 @@ body {
 	--color-accent-fainter-light: var(--color-blue-50);
 	--color-accent-hover-light: var(--color-blue-600);
 	--color-background-light: var(--color-white);
-	--color-foreground-light: var(--color-gray-800); /* check if 800 is better than 950 */
+	--color-foreground-light: var(--color-gray-800);
 	--color-foreground-faint-light: var(--color-gray-600);
 	--color-foreground-fainter-light: var(--color-gray-400);
 	--color-card-light: var(--color-gray-50);
@@ -92,7 +95,7 @@ body {
 	--color-border-inverse: var(--color-border-dark);
 	--color-border-accent: var(--color-border-accent-light);
 	--color-border-accent-inverse: var(--color-border-accent-dark);
-}
+} */
 
 /* TODO: CONSIDER USING DAISYUI INSTEAD! */
 
