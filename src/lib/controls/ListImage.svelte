@@ -19,6 +19,7 @@
     flex flex-row items-stretch justify-center 
     card card-border border-base-content/30
     w-48 lg:w-64 xl:w-80
+	overflow-hidden
     ${$$restProps?.class || ''}`}
 	draggable="false"
 >

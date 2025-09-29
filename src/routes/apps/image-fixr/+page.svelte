@@ -197,15 +197,14 @@
 		<OverlayScrollbarsComponent
 			options={{
 				scrollbars: {
-					theme: 'os-theme-dark',
-					autoHide: 'leave',
+					theme: 'os-theme-light os-theme-custom',
+					autoHide: 'never',
 					autoHideDelay: 300,
 					autoHideSuspend: true,
 					visibility: 'auto'
 				}
 			}}
 			defer
-			bind:this={previewCardEl}
 			id="previewCard"
 			data-overlayscrollbars-initialize
 			class="h-full w-full overflow-y-auto overflow-x-hidden data-simplebar"
@@ -249,7 +248,7 @@
 				bind:this={canvasEl}
 				width="1920"
 				height="1080"
-				class="max-w-full max-h-full object-contain rounded-xl bg-transparent"
+				class="card max-w-full max-h-full object-contain bg-transparent"
 			></canvas>
 		</div>
 

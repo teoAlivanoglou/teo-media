@@ -24,8 +24,8 @@
 	let ghostItem = $state<ImageItem | null>(null);
 	let ghostEl: HTMLDivElement | null = $state(null);
 	let raf = 0;
-	let px = 0;
-	let py = 0;
+	let px = $state(0);
+	let py = $state(0);
 	let edgeRAF = 0;
 	let lastClientY = 0;
 
