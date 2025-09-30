@@ -44,11 +44,9 @@ body {
 }
 
 .os-theme-custom {
-	--os-size: 100px !important;
-	/* handle colors */
-	--os-handle-bg: rgba(100, 100, 100, 0.5) !important;
-	--os-handle-bg-hover: rgba(100, 100, 100, 0.7) !important;
-	--os-handle-bg-active: rgba(100, 100, 100, 0.9) !important;
+	--os-size: 14px !important;
+	--os-handle-bg: color-mix(in oklch, currentColor 35%, #0000) !important;
+	--os-handle-bg-hover: color-mix(in oklch, currentColor 35%, #9a9a9a9a) !important;
 
 	/* track colors * !important/
   --os-track-bg: transparent !important;
@@ -57,11 +55,4 @@ body {
 
   /* optional: border radius */
 	--os-handle-border-radius: 6px;
-}
-
-.os-theme-custom.os-scrollbar-vertical {
-	--os-size: 14px !important;
-	--os-handle-bg: color-mix(in oklch, currentColor 35%, #0000) !important;
-	--os-handle-bg-hover: color-mix(in oklch, currentColor 35%, #9a9a9a9a) !important;
-	/* color-mix(in oklch, var(--color-primary) 35%, #0000) #0000 !important; */
 }

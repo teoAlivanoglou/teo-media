@@ -254,7 +254,7 @@
 
 		<div
 			class="absolute bottom-4 right-4 card card-border
-		bg-base-200/40 backdrop-blur-md p-3 flex items-center gap-3"
+		bg-base-200/40 border-base-300 backdrop-blur-md p-3 flex items-center gap-3"
 		>
 			<Slider
 				value={mix}
