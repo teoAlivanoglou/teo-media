@@ -263,12 +263,12 @@
 
 {#if open}
 	<div
-		class="fixed inset-0 bg-background-inverse/70 z-[2147483646] backdrop-blur-xs pointer-events-none"
+		class="modal-backdrop fixed inset-0 bg-background-inverse/70 z-[2147483646] backdrop-blur-xs pointer-events-none"
 		use:portal
 	></div>
 
 	<div
-		class="fixed top-4 bottom-4 pointer-events-none block z-[2147483647] bg-transparent"
+		class="modal fixed top-4 bottom-4 pointer-events-auto block z-[2147483647]"
 		role="dialog"
 		aria-modal="true"
 		use:portal
@@ -286,7 +286,7 @@
 			style="scrollbar-gutter: auto; scroll-behavior: smooth;"
 		>
 			<div
-				class={`relative z-[1] w-full bg-background-inverse/70 p-1.5 backdrop-blur-lg
+				class={`modal-box relative z-[1] w-full bg-background-inverse/70 p-1.5 backdrop-blur-lg
 				rounded-2xl 
                 ${dragState.dragging ? 'cursor-grabbing' : ''}`}
 				onpointermove={onPointerMove}
