@@ -7,18 +7,12 @@
 	const {
 		open = false,
 		items = [] as ImageItem[],
-		rowHeight = 96,
-		onCommit = undefined as undefined | ((items: ImageItem[]) => void),
-		onCancel = undefined as undefined | (() => void),
-		initialDragIndex = null as number | null,
 		anchor = null as { left: number; top: number; width: number } | null,
-		initialPointer = null as { x: number; y: number } | null
+		initialDragIndex = null as number | null,
+		initialPointer = null as { x: number; y: number } | null,
+		onCommit = undefined as undefined | ((items: ImageItem[]) => void),
+		onCancel = undefined as undefined | (() => void)
 	} = $props();
-
-	let container: HTMLElement | null = $state(null);
-
-	// OverlayScrollbars instance
-	let osComp: any = $state(null);
 
 	// Ghost and pointer
 	let ghostItem = $state<ImageItem | null>(null);
@@ -26,11 +20,65 @@
 	let raf = 0;
 	let px = $state(0);
 	let py = $state(0);
-	let edgeRAF = 0;
+
+	// OverlayScrollbars component (from reference)
+	let osComp: any = $state(null);
+
+	// Auto-scroll variables (from working reference)
 	let lastClientY = 0;
+	let edgeRaf = 0;
+
+	function updateTargetIndex(clientY: number) {
+		// Two-step positioning: find item under mouse, then decide before/after
+		const items = document.querySelectorAll('.modal-box div.flex.items-center');
+		const markers = document.querySelectorAll('.modal-box .bg-accent');
+		let foundIndex = -1;
+		let isOverMarker = false;
+
+		// Check if mouse is over a marker
+		markers.forEach((marker) => {
+			const rect = marker.getBoundingClientRect();
+			if (clientY >= rect.top && clientY <= rect.bottom) {
+				isOverMarker = true;
+			}
+		});
+
+		if (!isOverMarker) {
+			// Find which item the mouse is over
+			items.forEach((item, index) => {
+				const rect = item.getBoundingClientRect();
+				if (clientY >= rect.top && clientY <= rect.bottom) {
+					foundIndex = index;
+				}
+			});
+
+			if (foundIndex !== -1) {
+				// Check which side of the item
+				const itemRect = items[foundIndex].getBoundingClientRect();
+				const distToTop = Math.abs(clientY - itemRect.top);
+				const distToBottom = Math.abs(clientY - itemRect.bottom);
+
+				const newTarget = distToTop < distToBottom ? foundIndex : foundIndex + 1;
+				const previousTarget = dragState.targetIndex;
+
+				if (newTarget !== previousTarget) {
+					dragState.oldPosition = previousTarget;
+					dragState.targetIndex = newTarget;
+					dragState.transitioning = true;
+				}
+			} else {
+				dragState.oldPosition = -1;
+			}
+		} else {
+			dragState.oldPosition = -1;
+		}
+	}
 
 	// Slot alignment offset (kept; set to 0 during free movement)
 	let yOffset = $state(0);
+
+	// Measured row height for precise positioning
+	let rowHeight = $state(100); // Default, will be measured
 
 	// Drag state
 	const dragState = $state({
@@ -38,25 +86,33 @@
 		itemId: null as string | null,
 		startIndex: -1,
 		targetIndex: -1,
-		scrollTop: 0
+		scrollTop: 0,
+		oldPosition: -1,
+		newPosition: -1,
+		transitioning: false
 	});
 
-	// Visible list excluding the dragged item
-	const filtered = $derived(
-		dragState.dragging && dragState.itemId
-			? items.filter((it) => it.id !== dragState.itemId)
-			: items
-	);
-	const filteredLen = $derived(filtered.length);
+	// Container for auto-scroll (using working reference pattern)
+	let container: HTMLElement | null = $state(null);
 
-	// Wire OverlayScrollbars viewport as the "container" for all math/events
+	// Wire OverlayScrollbars viewport as the "container"
 	$effect(() => {
-		if (!osComp) return;
+		console.log('Container effect running - osComp:', !!osComp);
+		if (!osComp) {
+			console.log('No osComp, returning');
+			return;
+		}
 		const inst = osComp.osInstance?.();
-		if (!inst) return;
+		console.log('osInstance:', !!inst);
+		if (!inst) {
+			console.log('No osInstance, returning');
+			return;
+		}
 
 		const vp = inst.elements().viewport as HTMLElement;
+		console.log('Viewport found:', !!vp);
 		container = vp;
+		console.log('Container wired to viewport:', vp);
 
 		const handler = () => onScroll();
 		vp.addEventListener('scroll', handler, { passive: true });
@@ -67,7 +123,8 @@
 		};
 	});
 
-	function indexFromPointer(clientY: number): number {
+	// from working code reference
+	let indexFromPointer = (clientY: number): number => {
 		if (!container) return 0;
 		const rect = container.getBoundingClientRect();
 		const localY = clientY - rect.top;
@@ -79,254 +136,252 @@
 		if (idx < 0) idx = 0;
 		if (idx > filteredLen) idx = filteredLen;
 		return idx;
+	};
+
+	function onScroll() {
+		if (!container) return;
+		dragState.scrollTop = container.scrollTop;
 	}
 
-	function onPointerDown(e: PointerEvent, idx: number, id: string) {
-		// Drag started inside overlay
-		dragState.dragging = true;
-		dragState.itemId = id;
-		dragState.startIndex = idx;
-		dragState.targetIndex = idx;
-
-		if (container) {
-			const rect = container.getBoundingClientRect();
-			const localY = e.clientY - rect.top;
-			const slotCenter = idx * rowHeight + rowHeight / 2;
-			yOffset = slotCenter - (dragState.scrollTop + localY);
-		}
-	}
-
-	function edgeStep() {
+	// from working code reference - exact copy
+	let edgeStep = () => {
+		console.log('edgeStep called - container:', !!container, 'dragging:', dragState.dragging);
 		if (!container || !dragState.dragging) {
-			edgeRAF = 0;
+			console.log('edgeStep early return - no container or not dragging');
+			edgeRaf = 0;
 			return;
 		}
 
 		const rect = container.getBoundingClientRect();
 		const localY = lastClientY - rect.top;
+		console.log(
+			'localY:',
+			localY,
+			'container height:',
+			rect.height,
+			'lastClientY:',
+			lastClientY,
+			'container.top:',
+			rect.top
+		);
+
 		const zone = 72; // px
 		let dy = 0;
 
 		if (localY < zone) {
 			const t = (zone - localY) / zone; // 0..1
 			dy = -Math.round(4 + t * 18); // -4..-22 px/frame
+			console.log('NEAR TOP - distance to zone:', zone - localY, 't:', t, 'dy:', dy);
 		} else if (localY > rect.height - zone) {
-			const t = (localY - (rect.height - zone)) / zone;
+			const distance = localY - (rect.height - zone);
+			const t = distance / zone;
 			dy = Math.round(4 + t * 18); // 4..22 px/frame
+			console.log('NEAR BOTTOM - distance to zone:', distance, 't:', t, 'dy:', dy);
 		}
+
+		console.log('Calculated dy:', dy);
 
 		if (dy !== 0) {
 			const max = container.scrollHeight - container.clientHeight;
 			const next = Math.max(0, Math.min(max, container.scrollTop + dy));
+			console.log(
+				'Scroll calc - current:',
+				container.scrollTop,
+				'dy:',
+				dy,
+				'next:',
+				next,
+				'max:',
+				max
+			);
 			if (next !== container.scrollTop) {
+				console.log('APPLYING SCROLL - from', container.scrollTop, 'to', next);
 				container.scrollTop = next;
 				dragState.scrollTop = next;
 				// Update target with new scroll
 				dragState.targetIndex = indexFromPointer(lastClientY);
+			} else {
+				console.log('No scroll needed - already at', container.scrollTop);
 			}
-			edgeRAF = requestAnimationFrame(edgeStep);
+			console.log('Continuing animation');
+			edgeRaf = requestAnimationFrame(edgeStep);
 		} else {
-			edgeRAF = 0;
+			console.log('Stopping animation - no dy');
+			edgeRaf = 0;
 		}
-	}
+	};
 
-	function onPointerMove(e: PointerEvent) {
-		if (!dragState.dragging) return;
+	// Visible list excluding the dragged item
+	const filtered = $derived(
+		dragState.dragging && dragState.itemId
+			? items.filter((it) => it.id !== dragState.itemId)
+			: items
+	);
+	const filteredLen = $derived(filtered.length);
 
-		px = e.clientX;
-		py = e.clientY;
-		lastClientY = e.clientY; // track for edge scroll
-
-		if (!raf) {
-			raf = requestAnimationFrame(() => {
-				if (ghostEl) ghostEl.style.transform = `translate3d(${px - 80}px, ${py - 45}px, 0)`;
-				raf = 0;
-			});
-		}
-
-		dragState.targetIndex = indexFromPointer(e.clientY);
-
-		if (!edgeRAF) edgeRAF = requestAnimationFrame(edgeStep);
-	}
-
-	function commitReorder() {
-		if (dragState.itemId == null || dragState.targetIndex === dragState.startIndex) {
-			onCancel?.();
-			return;
-		}
-		const next = items.slice();
-		const from = dragState.startIndex;
-		const [moved] = next.splice(from, 1);
-		next.splice(dragState.targetIndex, 0, moved);
-		onCommit?.(next);
-	}
-
-	function onPointerUp() {
-		if (!dragState.dragging) return;
-		dragState.dragging = false;
-		ghostItem = null;
-		yOffset = 0;
-		commitReorder();
-	}
-
-	function onPointerCancel() {
-		if (!dragState.dragging) return;
-		dragState.dragging = false;
-		ghostItem = null;
-		yOffset = 0;
-		onCancel?.();
-	}
-
-	function onScroll() {
-		if (!container) return;
-		dragState.scrollTop = container.scrollTop;
-		yOffset = 0;
-	}
-
-	// Global listeners to end drag even if pointer leaves overlay
+	// Initialize drag when overlay opens with drag parameters
 	$effect(() => {
-		if (!open || !dragState.dragging) return;
+		if (open && initialDragIndex !== null && initialPointer && items[initialDragIndex]) {
+			const draggedItem = items[initialDragIndex];
+			ghostItem = draggedItem;
+			px = initialPointer.x;
+			py = initialPointer.y;
 
-		const up = () => {
-			if (!dragState.dragging) return;
-			dragState.dragging = false;
-			ghostItem = null;
-			yOffset = 0;
-			commitReorder();
-		};
+			dragState.dragging = true;
+			dragState.itemId = draggedItem.id;
+			dragState.startIndex = initialDragIndex;
+			dragState.targetIndex = initialDragIndex;
 
-		const cancel = () => {
-			if (!dragState.dragging) return;
-			dragState.dragging = false;
-			ghostItem = null;
-			yOffset = 0;
-			onCancel?.();
-		};
-
-		window.addEventListener('pointerup', up, true);
-		window.addEventListener('pointercancel', cancel, true);
-		return () => {
-			window.removeEventListener('pointerup', up, true);
-			window.removeEventListener('pointercancel', cancel, true);
-		};
-	});
-
-	// Start drag from external handle with stable initial alignment (scroll-only)
-	$effect(() => {
-		if (open && initialDragIndex !== null && items[initialDragIndex] && container) {
-			const idx = initialDragIndex;
-
-			// 1) Ghost under pointer instantly
-			if (initialPointer) {
-				px = initialPointer.x;
-				py = initialPointer.y;
+			// Measure actual row height from a visible item
+			const firstItem = document.querySelector('.modal-box div.flex.items-center') as HTMLElement;
+			if (firstItem) {
+				rowHeight = firstItem.getBoundingClientRect().height;
+			} else {
+				// Fallback calculation: image height + padding
+				rowHeight = 90 + 12; // 90px image + 6px top + 6px bottom
 			}
 
-			// 2) Start drag state and ghost
-			dragState.dragging = true;
-			dragState.itemId = items[idx].id;
-			dragState.startIndex = idx;
-			dragState.targetIndex = idx;
-			ghostItem = items[idx];
+			// Start following mouse (using reference code pattern)
+			const handlePointerMove = (e: PointerEvent) => {
+				px = e.clientX;
+				py = e.clientY;
+				lastClientY = e.clientY; // track for edge scroll
 
-			// 3) Align the slot center with the pointer Y (via scroll; no persistent offset)
-			const rect = container.getBoundingClientRect();
-			const localY = (initialPointer ? initialPointer.y : rect.top + rect.height / 2) - rect.top;
-			const slotCenter = idx * rowHeight + rowHeight / 2;
+				// Update ghost position smoothly
+				if (raf) cancelAnimationFrame(raf);
+				raf = requestAnimationFrame(() => {
+					if (ghostEl) ghostEl.style.transform = `translate3d(${px - 80}px, ${py - 45}px, 0)`;
+					raf = 0;
+				});
 
-			const desiredScrollTop = slotCenter - localY;
-			const min = 0;
-			const max = Math.max(0, container.scrollHeight - container.clientHeight);
-			container.scrollTop = Math.min(max, Math.max(min, desiredScrollTop));
-			dragState.scrollTop = container.scrollTop;
+				// Update target position
+				updateTargetIndex(e.clientY);
+				// Start edge scrolling check
+				if (!edgeRaf) edgeRaf = requestAnimationFrame(edgeStep);
+			};
 
-			yOffset = 0;
-		}
+			window.addEventListener('pointermove', handlePointerMove, { passive: true });
 
-		if (!open) {
+			return () => {
+				window.removeEventListener('pointermove', handlePointerMove);
+			};
+		} else if (!open) {
+			// Cleanup when overlay closes
 			ghostItem = null;
 			dragState.dragging = false;
 			dragState.itemId = null;
-			dragState.startIndex = -1;
-			dragState.targetIndex = -1;
-			yOffset = 0;
+			if (edgeRaf) {
+				cancelAnimationFrame(edgeRaf);
+				edgeRaf = 0;
+			}
+			if (raf) {
+				cancelAnimationFrame(raf);
+				raf = 0;
+			}
 		}
 	});
 
-	// Keep pointermove flowing even if leaving the overlay (global move)
+	// Auto-close when dragging ends anywhere
 	$effect(() => {
-		const move = (e: PointerEvent) => onPointerMove(e);
-		window.addEventListener('pointermove', move, true);
-		return () => window.removeEventListener('pointermove', move, true);
+		if (!open) return;
+
+		const handlePointerUp = (e: PointerEvent) => {
+			// Auto-commit when pointer released anywhere (if dragging)
+			if (dragState.dragging) {
+				// Reorder the array based on drag result
+				const newItems = [...items];
+				const draggedItem = newItems.find((it) => it.id === dragState.itemId);
+				if (draggedItem) {
+					newItems.splice(dragState.startIndex, 1);
+					newItems.splice(dragState.targetIndex, 0, draggedItem);
+					onCommit?.(newItems);
+				} else {
+					onCancel?.();
+				}
+			} else {
+				onCancel?.();
+			}
+		};
+
+		const handlePointerCancel = (e: PointerEvent) => {
+			// Auto-cancel when drag cancelled
+			onCancel?.();
+		};
+
+		// Global listeners to detect drag end
+		window.addEventListener('pointerup', handlePointerUp, { capture: true });
+		window.addEventListener('pointercancel', handlePointerCancel, { capture: true });
+
+		return () => {
+			window.removeEventListener('pointerup', handlePointerUp, { capture: true });
+			window.removeEventListener('pointercancel', handlePointerCancel, { capture: true });
+		};
 	});
 </script>
 
 {#if open}
 	<div
-		class="modal-backdrop fixed inset-0 bg-background-inverse/70 z-[2147483646] backdrop-blur-xs pointer-events-none"
+		class="modal modal-open"
+		style="display: block !important; place-items: unset !important; "
 		use:portal
-	></div>
-
-	<div
-		class="modal fixed top-4 bottom-4 pointer-events-auto block z-[2147483647]"
-		role="dialog"
-		aria-modal="true"
-		use:portal
-		style={anchor ? `left:${anchor.left}px; width:${anchor.width}px;` : `left:0; width:100vw;`}
 	>
-		<OverlayScrollbarsComponent
-			options={{
-				scrollbars: {
-					theme: 'os-theme-light',
-					autoHide: 'never'
-				}
-			}}
-			bind:this={osComp}
-			class="w-full h-full pointer-events-auto rounded-2xl"
-			style="scrollbar-gutter: auto; scroll-behavior: smooth;"
+		<div
+			class="modal-box h-[100vh] overflow-hidden flex flex-col px-0"
+			style="
+				position: absolute !important;
+				left: {anchor?.left ?? 0}px !important;
+				width: {anchor?.width ?? '100%'}px !important;
+				top: 0 !important;
+				transform: none !important;
+				margin: 0 !important;
+			"
 		>
-			<div
-				class={`modal-box relative z-[1] w-full bg-background-inverse/70 p-1.5 backdrop-blur-lg
-				rounded-2xl 
-                ${dragState.dragging ? 'cursor-grabbing' : ''}`}
-				onpointermove={onPointerMove}
-				onpointerup={onPointerUp}
-				onpointercancel={onPointerCancel}
+			<OverlayScrollbarsComponent
+				bind:this={osComp}
+				options={{
+					scrollbars: {
+						theme: 'os-theme-light os-theme-custom',
+						autoHide: 'never',
+						autoHideDelay: 300,
+						autoHideSuspend: true,
+						visibility: 'auto'
+					}
+				}}
+				class="flex-1 min-h-0"
 			>
-				{#if dragState.dragging && dragState.targetIndex === 0}
+				<div class="py-0.5 gap-0 space-y-0.5 pr-2">
+					<!-- Drop position 0: before first item -->
 					<div
-						class="mx-3 my-0.5 h-1.5 rounded-full bg-accent-inverse transition-[height,opacity] duration-150 ease-in-out"
+						class="w-full bg-accent m-0 ml-1 transition-[height] duration-100 ease-in-out"
+						class:h-2={dragState.dragging && dragState.targetIndex === 0}
+						class:h-0={!dragState.dragging || dragState.targetIndex !== 0}
 					></div>
-				{/if}
 
-				{#each filtered as item, i (item.id)}
-					<div
-						class="flex items-center gap-3 px-3 py-1.5 transition-colors duration-200 ease-in-out"
-						style={`height:${rowHeight}px`}
-						onpointerdown={(e) => onPointerDown(e, i, item.id)}
-					>
-						<img
-							class="w-[160px] h-[90px] flex-none object-cover rounded-lg bg-neutral-800"
-							src={item.url}
-							alt={item.label ?? 'Image'}
-						/>
+					{#each filtered as item, i (item.id)}
+						<div class="flex items-center gap-3 px-3 py-1.5">
+							<img
+								class="w-[160px] h-[90px] flex-none object-cover rounded-lg bg-base-300"
+								src={item.url}
+								alt={item.label ?? 'Image'}
+							/>
+							<span class="ml-auto text-base-content/70 text-xs">{i + 1}</span>
+						</div>
 
-						<span class="ml-auto text-neutral-400 text-xs">{i + 1}</span>
-					</div>
-
-					{#if dragState.dragging && dragState.targetIndex === i + 1}
+						<!-- Drop position i+1: after current item -->
 						<div
-							class="mx-3 my-0.5 h-1.5 rounded-full bg-accent-inverse transition-[height,opacity] duration-150 ease-in-out"
+							class="w-full bg-accent m-0 ml-1 transition-[height] duration-100 ease-in-out"
+							class:h-2={dragState.dragging && dragState.targetIndex === i + 1}
+							class:h-0={!dragState.dragging || dragState.targetIndex !== i + 1}
 						></div>
-					{/if}
-				{/each}
-			</div>
-		</OverlayScrollbarsComponent>
+					{/each}
+				</div>
+			</OverlayScrollbarsComponent>
+		</div>
 	</div>
 
 	{#if ghostItem}
 		<div
-			class="fixed left-0 top-0 w-[160px] h-[90px] pointer-events-none will-change-transform opacity-90 drop-shadow-[0_6px_14px_rgba(0,0,0,0.45)] transition-[opacity,transform] duration-75 ease-out z-[2147483647]"
+			class="fixed left-0 top-0 w-[160px] h-[90px] pointer-events-none will-change-transform opacity-90 drop-shadow-[0_6px_14px_rgba(0,0,0,0.45)] z-[99999]"
 			use:portal
 			bind:this={ghostEl}
 			style={`transform: translate3d(${px - 80}px, ${py - 45}px, 0);`}

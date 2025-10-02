@@ -138,10 +138,9 @@
 <ReorderOverlay
 	open={overlayOpen}
 	items={images}
-	rowHeight={96}
+	anchor={overlayAnchor}
 	{initialDragIndex}
 	{initialPointer}
-	anchor={overlayAnchor}
 	onCommit={handleCommit}
 	onCancel={handleCancel}
 />
