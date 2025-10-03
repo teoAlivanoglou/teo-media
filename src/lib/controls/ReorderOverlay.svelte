@@ -320,13 +320,9 @@
 </script>
 
 {#if open}
-	<div
-		class="modal modal-open"
-		style="display: block !important; place-items: unset !important; "
-		use:portal
-	>
+	<div class="modal modal-open backdrop-blur-3xl" use:portal>
 		<div
-			class="modal-box h-[100vh] overflow-hidden flex flex-col px-0"
+			class="modal-box overflow-hidden flex flex-col px-0 scrollbar-gutter: stable;"
 			style="
 				position: absolute !important;
 				left: {anchor?.left ?? 0}px !important;
@@ -358,9 +354,9 @@
 					></div>
 
 					{#each filtered as item, i (item.id)}
-						<div class="flex items-center gap-3 px-3 py-1.5">
+						<div class="card flex flex-row items-center gap-3 px-3 py-1.5 overflow-hidden">
 							<img
-								class="w-[160px] h-[90px] flex-none object-cover rounded-lg bg-base-300"
+								class="w-[160px] h-[90px] flex-none object-contain bg-base-300"
 								src={item.url}
 								alt={item.label ?? 'Image'}
 							/>

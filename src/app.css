@@ -25,34 +25,8 @@
 	font-size: 2em;
 }
 
-.scrollbar-measure {
-	width: 100px;
-	height: 100px;
-	overflow: scroll;
-	position: absolute;
-	top: -9999px;
-}
-
-body {
-	--list-container-padding-offset: 0px;
-	--list-container-padding-left: calc(
-		var(--spacing) * 4 - 1 * (var(--list-container-padding-offset))
-	);
-	--list-container-padding-right: calc(
-		var(--spacing) * 4 - 1 * (var(--list-container-padding-offset))
-	);
-}
-
 .os-theme-custom {
 	--os-size: 14px !important;
 	--os-handle-bg: color-mix(in oklch, currentColor 35%, #0000) !important;
 	--os-handle-bg-hover: color-mix(in oklch, currentColor 35%, #9a9a9a9a) !important;
-
-	/* track colors * !important/
-  --os-track-bg: transparent !important;
-  --os-track-bg-hover: transparent !important;
-  --os-track-bg-active: transparent !important; !important
-
-  /* optional: border radius */
-	--os-handle-border-radius: 6px;
 }
