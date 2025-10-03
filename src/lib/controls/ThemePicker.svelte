@@ -4,11 +4,14 @@
 	import 'overlayscrollbars/overlayscrollbars.css';
 	import { OverlayScrollbarsComponent } from 'overlayscrollbars-svelte';
 
+	let { class: className = '' } = $props();
+
 	// export let $$restProps;
 </script>
 
-<div class="dropdown dropdown-end">
-	<div tabindex="0" role="button" class="hover:text-accent transition">
+<!-- <div class={`dropdown dropdown-end` + $$restProps}> -->
+<div class={`dropdown dropdown-end ${className}`}>
+	<div tabindex="0" role="button">
 		Theme
 		<svg
 			width="12px"

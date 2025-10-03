@@ -100,9 +100,10 @@
 				<a
 					href="https://github.com/yourproject"
 					target="_blank"
-					class="hover:text-accent transition">GitHub</a
+					class="hover:text-primary transition">GitHub</a
 				>
-				<ThemePicker />
+				<ThemePicker class="hover:text-primary transition" />
+				<!-- <ThemePicker class="hover:text-primary transition" /> -->
 			</nav>
 		</div>
 	</M.div>
