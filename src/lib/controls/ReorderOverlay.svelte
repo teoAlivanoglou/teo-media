@@ -348,15 +348,16 @@
 				<div class="py-0.5 gap-0 space-y-0.5 pr-2">
 					<!-- Drop position 0: before first item -->
 					<div
-						class="w-full bg-accent m-0 ml-1 transition-[height] duration-100 ease-in-out"
+						class="card w-full bg-accent m-0 ml-1 transition-[height] duration-100 ease-in-out"
 						class:h-2={dragState.dragging && dragState.targetIndex === 0}
 						class:h-0={!dragState.dragging || dragState.targetIndex !== 0}
+						class:opacity-0={!dragState.dragging || dragState.targetIndex !== 0}
 					></div>
 
 					{#each filtered as item, i (item.id)}
-						<div class="card flex flex-row items-center gap-3 px-3 py-1.5 overflow-hidden">
+						<div class="flex flex-row items-center gap-3 px-3 py-1.5 overflow-hidden">
 							<img
-								class="w-[160px] h-[90px] flex-none object-contain bg-base-300"
+								class="card w-[160px] h-[90px] flex-none object-contain bg-base-300"
 								src={item.url}
 								alt={item.label ?? 'Image'}
 							/>
@@ -365,9 +366,10 @@
 
 						<!-- Drop position i+1: after current item -->
 						<div
-							class="w-full bg-accent m-0 ml-1 transition-[height] duration-100 ease-in-out"
+							class="card w-full bg-accent m-0 ml-1 transition-[height] duration-100 ease-in-out"
 							class:h-2={dragState.dragging && dragState.targetIndex === i + 1}
 							class:h-0={!dragState.dragging || dragState.targetIndex !== i + 1}
+							class:opacity-0={!dragState.dragging || dragState.targetIndex !== i + 1}
 						></div>
 					{/each}
 				</div>
@@ -377,13 +379,13 @@
 
 	{#if ghostItem}
 		<div
-			class="fixed left-0 top-0 w-[160px] h-[90px] pointer-events-none will-change-transform opacity-90 drop-shadow-[0_6px_14px_rgba(0,0,0,0.45)] z-[99999]"
+			class="card overflow-hidden fixed left-0 top-0 w-[160px] h-[90px] pointer-events-none will-change-transform opacity-90 drop-shadow-[0_6px_14px_rgba(0,0,0,0.45)] z-[99999]"
 			use:portal
 			bind:this={ghostEl}
 			style={`transform: translate3d(${px - 80}px, ${py - 45}px, 0);`}
 		>
 			<img
-				class="w-full h-full object-cover rounded-lg"
+				class="w-full h-full object-cover"
 				src={ghostItem.url}
 				alt={ghostItem.label ?? 'Ghost'}
 			/>
