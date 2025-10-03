@@ -102,7 +102,7 @@
 	tabindex="0"
 	aria-label={'Image list drop zone'}
 	aria-dropeffect="copy"
-	class="flex flex-col gap-0"
+	class="flex flex-col gap-0 list"
 	ondrop={handleDrop}
 	ondragover={(e) => e.preventDefault()}
 >
@@ -117,7 +117,7 @@
 		>
 			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
 		</li> -->
-		<li class=" py-1 px-4">
+		<li class=" py-1 px-4 list-item">
 			<ListImage
 				id={image.id}
 				index={i}
@@ -130,7 +130,7 @@
 	{/each}
 
 	<!-- Placeholder uploader -->
-	<div class="py-1 px-4">
+	<div class="py-1 px-4 list-item">
 		<ListPlaceholder onFiles={handleFiles} />
 	</div>
 </ul>
@@ -138,10 +138,9 @@
 <ReorderOverlay
 	open={overlayOpen}
 	items={images}
-	rowHeight={96}
+	anchor={overlayAnchor}
 	{initialDragIndex}
 	{initialPointer}
-	anchor={overlayAnchor}
 	onCommit={handleCommit}
 	onCancel={handleCancel}
 />

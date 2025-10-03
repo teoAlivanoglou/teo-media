@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "daisyui Docs": {
+      "url": "https://gitmcp.io/saadeghi/daisyui",
+      "disabled": false,
+      "autoApprove": []
+    },
+    "svelte-llm": {
+      "url": "https://svelte-llm.stanislav.garden/mcp/sse",
+      "disabled": false,
+      "autoApprove": []
+    },
+    "tailwindcss-server": {
+      "command": "tailwindcss-server",
+      "disabled": false,
+      "alwaysAllow": []
+    }
+  }
+}

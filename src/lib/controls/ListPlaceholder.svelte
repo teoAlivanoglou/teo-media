@@ -19,9 +19,11 @@
 
 <div
 	role="region"
-	class={`relative flex flex-col items-center justify-center aspect-video rounded-xl lg:rounded-2xl overflow-hidden w-48 lg:w-64 xl:w-80 scroll-m-0
-    border-2 border-dashed border-border bg-card text-foreground-fainter text-sm cursor-pointer
-      hover:border-border-accent hover:bg-accent-fainter transition 
+	class={`relative flex flex-col items-center justify-center aspect-video w-48 lg:w-64 xl:w-80 scroll-m-0
+    
+    card card-dash border-base-content/30
+	 text-sm cursor-pointer
+      hover:border-primary hover:bg-primary/10 transition 
     ${$$restProps?.class || ''}
   `}
 >

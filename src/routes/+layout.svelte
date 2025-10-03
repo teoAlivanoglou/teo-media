@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { Motion, M } from 'motion-start';
 	import { headerOpen } from '$lib/stores/ui';
+	import ThemePicker from '$lib/controls/ThemePicker.svelte';
 
 	let { children } = $props();
 
@@ -50,7 +51,7 @@
 	/>
 </svelte:head>
 
-<div class="h-screen flex flex-col bg-background min-h-0">
+<div class="h-screen flex flex-col bg-base-100 min-h-0">
 	<!-- Hamburger toggle -->
 	<!-- {#if windowHeight < SMALL_HEIGHT} -->
 	<M.button
@@ -59,8 +60,8 @@
 		class={`absolute top-1.5 right-2 z-50 p-2 rounded-md 
            ${
 							$headerOpen
-								? 'bg-transparent text-foreground-inverse hover:[&>*]:stroke-accent-inverse transition-colors duration-100 ease-in-out transition-discrete'
-								: 'bg-background/50 text-foreground hover:[&>*]:stroke-accent transition-colors duration-150 delay-150 ease-in transition-discrete'
+								? 'bg-transparent text-neutral-content hover:[&>*]:stroke-primary transition-colors duration-100 ease-in-out transition-discrete'
+								: 'bg-base-100/50 text-base-content hover:[&>*]:stroke-primary transition-colors duration-150 delay-150 ease-in transition-discrete'
 						}
            `}
 	>
@@ -87,20 +88,22 @@
 
 	<!-- Header -->
 	<M.div
-		class="bg-background-inverse text-foreground-inverse shadow-md flex-shrink-0 overflow-hidden"
+		class="bg-neutral text-neutral-content shadow-md flex-shrink-0 "
 		initial={{ height: 0, opacity: 0 }}
 		animate={$headerOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
 		transition={{ duration: 0.3, ease: 'easeInOut' }}
 	>
 		<div class="flex items-center justify-between px-4 py-3 pr-16 min-h-[3rem]">
 			<span class="font-bold tracking-wide">Media Toolbox</span>
-			<nav class="flex gap-8 text-base">
-				<a href="/apps" class="hover:text-accent-inverse transition">Apps</a>
+			<nav class="flex gap-8 text-base overflow-y-visible">
+				<a href="/apps" class="hover:text-primary transition">Apps</a>
 				<a
 					href="https://github.com/yourproject"
 					target="_blank"
-					class="hover:text-accent-inverse transition">GitHub</a
+					class="hover:text-primary transition">GitHub</a
 				>
+				<ThemePicker class="hover:text-primary transition" />
+				<!-- <ThemePicker class="hover:text-primary transition" /> -->
 			</nav>
 		</div>
 	</M.div>
@@ -113,7 +116,7 @@
 	<!-- Footer -->
 	{#if windowHeight >= SMALL_HEIGHT}
 		<footer
-			class="px-8 py-3 bg-background-inverse text-right text-foreground-inverse text-sm shadow-md flex-shrink-0"
+			class="px-8 py-3 bg-neutral text-right text-neutral-content text-sm shadow-md flex-shrink-0"
 		>
 			&copy; {new Date().getFullYear()} Media Toolbox &mdash; Built with SvelteKit
 		</footer>

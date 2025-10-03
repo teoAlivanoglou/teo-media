@@ -8,7 +8,7 @@
 </script>
 
 <div class="flex items-center gap-3">
-	<label class="flex items-center gap-2 text-foreground-faint font-medium text-sm">
+	<label class="flex items-center gap-2 text-primary font-medium text-sm">
 		{label}
 		<input
 			type="range"
@@ -17,10 +17,10 @@
 			{step}
 			bind:value
 			on:input={onInput}
-			class="w-20 accent-accent"
+			class="w-20 range range-xs range-primary"
 		/>
 	</label>
-	<span class="text-foreground-faint text-sm font-mono">
+	<span class="text-primary text-sm font-mono">
 		{Math.round(((value - min) / (max - min)) * 100)}%
 	</span>
 </div>

@@ -169,36 +169,42 @@
 
 <div
 	bind:this={containerEl}
-	class="h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[auto_1fr] grid-rows-[1fr_auto] gap-4"
+	class=" h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[auto_1fr] grid-rows-[1fr_auto] gap-4"
 >
-	<button
-		class="[grid-area:button] bg-accent hover:bg-accent-hover
+	<!-- <button
+		class="[grid-area:button] bg-primary text-primary-content hover:bg-accent-hover
 		shadow-lg text-foreground-inverse font-semibold py-2 px-4 rounded-2xl transition"
-	>
-		Download
-	</button>
+	> -->
+	<button class="btn btn-primary"> Download </button>
 
 	<!-- Previews card -->
+	<!-- <div
+		id="previewCardWrapper"
+		class="[grid-area:previews]
+		flex flex-col
+		bg-base-200 shadow-lg border border-border rounded-2xl overflow-hidden py-2"
+	> -->
+
 	<div
 		id="previewCardWrapper"
 		class="[grid-area:previews]
 		flex flex-col
-		bg-background shadow-lg border border-border rounded-2xl overflow-hidden py-2"
+		card card-border border-base-300
+		bg-base-200 overflow-hidden py-2"
 	>
-		<h2 class="text-xl font-semibold mb-2 text-foreground text-center">Inputs</h2>
+		<h2 class="text-xl font-semibold mb-2 text-base-content text-center">Inputs</h2>
 
 		<OverlayScrollbarsComponent
 			options={{
 				scrollbars: {
-					theme: 'os-theme-dark',
-					autoHide: 'leave',
+					theme: 'os-theme-dark os-theme-custom',
+					autoHide: 'never',
 					autoHideDelay: 300,
 					autoHideSuspend: true,
 					visibility: 'auto'
 				}
 			}}
 			defer
-			bind:this={previewCardEl}
 			id="previewCard"
 			data-overlayscrollbars-initialize
 			class="h-full w-full overflow-y-auto overflow-x-hidden data-simplebar"
@@ -234,19 +240,21 @@
 
 	<!-- Canvas card -->
 	<div
-		class="[grid-area:canvas] bg-background rounded-xl lg:rounded-2xl shadow-lg border border-border p-4 lg:p-6 flex flex-col relative min-h-0"
+		class="[grid-area:canvas]
+		bg-base-200 card card-border border-base-300 p-4 lg:p-6 flex flex-col relative min-h-0"
 	>
 		<div class="flex-1 flex items-center justify-center min-h-0">
 			<canvas
 				bind:this={canvasEl}
 				width="1920"
 				height="1080"
-				class="max-w-full max-h-full object-contain rounded-xl bg-transparent"
+				class="card max-w-full max-h-full object-contain bg-transparent"
 			></canvas>
 		</div>
 
 		<div
-			class="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg border border-border p-3 flex items-center gap-3"
+			class="absolute bottom-4 right-4 card card-border
+		bg-base-100 border-base-300 p-3 flex items-center gap-3"
 		>
 			<Slider
 				value={mix}
