@@ -1,5 +1,5 @@
 import { RenderPass } from './render-pass';
-import { TextureFilter, TextureManager, TextureWrap } from './texture-manager';
+import { TextureManager } from './texture-manager-new';
 
 import vertexSource from '$lib/webgl/shaders/basic-vertex.glsl?raw';
 import fragmentSource from '$lib/webgl/shaders/sample-fragment.glsl?raw';
@@ -17,22 +17,31 @@ export class WebGLRenderer {
 
 	constructor(canvas: HTMLCanvasElement) {
 		this.canvas = canvas;
+		this.gl = canvas.getContext('webgl2');
+		if (!this.gl) throw new Error('WebGL2 not supported');
 	}
 
 	async init(): Promise<void> {
+		console.log('Initializing WebGL renderer...');
+
 		this.gl = this.canvas.getContext('webgl2');
 		if (!this.gl) throw new Error('WebGL2 not supported');
 
+		console.log('WebGL context created successfully');
+
 		this.textures = new TextureManager(this.gl);
 
+		console.log('Creating placeholder textures...');
 		this.textures.createPlaceholder(0, 1920, 1080, [200, 80, 20, 255]);
 		this.textures.createPlaceholder(1, 1080, 1920, [50, 50, 50, 255]);
 
 		const bgTex = this.textures.getTexture(0)!;
 		const fgTex = this.textures.getTexture(1)!;
 
+		console.log('Creating FBO...');
 		const fboFull = new FBO(this.gl, this.canvas.width, this.canvas.height);
 
+		console.log('Creating render passes...');
 		// Pass 0;
 		const pass0 = new RenderPass(this.gl, vertexSource, fragmentSource, [bgTex], fboFull);
 		pass0.uniforms.setVec2('u_canvasResolution', this.canvas.width, this.canvas.height);
@@ -49,7 +58,7 @@ export class WebGLRenderer {
 		this.passes.push(pass0);
 		this.passes.push(pass1);
 
-		console.log('Passes created');
+		console.log('WebGL renderer initialized successfully');
 		this.initialized = true;
 		this.render();
 	}
@@ -65,7 +74,7 @@ export class WebGLRenderer {
 
 	async updateTexture(index: number, url: string): Promise<void> {
 		if (!this.textures) return;
-		await this.textures.loadFromUrl(index, url, TextureWrap.REPEAT, TextureFilter.LINEAR);
+		await this.textures.getTextureForUrl(url);
 
 		this.requestRender();
 	}
@@ -86,6 +95,7 @@ export class WebGLRenderer {
 			return;
 		}
 
+		console.log('Rendering frame...');
 		this.gl.clearColor(0, 0, 0, 1);
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
@@ -93,6 +103,7 @@ export class WebGLRenderer {
 			pass.draw();
 		}
 
+		console.log('Frame rendered');
 		// requestAnimationFrame(this.render);
 		this.needsRender = false;
 	};

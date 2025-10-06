@@ -97,22 +97,22 @@
 
 	// Wire OverlayScrollbars viewport as the "container"
 	$effect(() => {
-		console.log('Container effect running - osComp:', !!osComp);
+		// console.log('Container effect running - osComp:', !!osComp);
 		if (!osComp) {
-			console.log('No osComp, returning');
+			// console.log('No osComp, returning');
 			return;
 		}
 		const inst = osComp.osInstance?.();
-		console.log('osInstance:', !!inst);
+		// console.log('osInstance:', !!inst);
 		if (!inst) {
-			console.log('No osInstance, returning');
+			// console.log('No osInstance, returning');
 			return;
 		}
 
 		const vp = inst.elements().viewport as HTMLElement;
-		console.log('Viewport found:', !!vp);
+		// console.log('Viewport found:', !!vp);
 		container = vp;
-		console.log('Container wired to viewport:', vp);
+		// console.log('Container wired to viewport:', vp);
 
 		const handler = () => onScroll();
 		vp.addEventListener('scroll', handler, { passive: true });
@@ -145,25 +145,16 @@
 
 	// from working code reference - exact copy
 	let edgeStep = () => {
-		console.log('edgeStep called - container:', !!container, 'dragging:', dragState.dragging);
+		// console.log('edgeStep called - container:', !!container, 'dragging:', dragState.dragging);
 		if (!container || !dragState.dragging) {
-			console.log('edgeStep early return - no container or not dragging');
+			// console.log('edgeStep early return - no container or not dragging');
 			edgeRaf = 0;
 			return;
 		}
 
 		const rect = container.getBoundingClientRect();
 		const localY = lastClientY - rect.top;
-		console.log(
-			'localY:',
-			localY,
-			'container height:',
-			rect.height,
-			'lastClientY:',
-			lastClientY,
-			'container.top:',
-			rect.top
-		);
+		// console.log(			'localY:',			localY,			'container height:',			rect.height,			'lastClientY:',			lastClientY,			'container.top:',			rect.top);
 
 		const zone = 72; // px
 		let dy = 0;
@@ -171,42 +162,33 @@
 		if (localY < zone) {
 			const t = (zone - localY) / zone; // 0..1
 			dy = -Math.round(4 + t * 18); // -4..-22 px/frame
-			console.log('NEAR TOP - distance to zone:', zone - localY, 't:', t, 'dy:', dy);
+			// console.log('NEAR TOP - distance to zone:', zone - localY, 't:', t, 'dy:', dy);
 		} else if (localY > rect.height - zone) {
 			const distance = localY - (rect.height - zone);
 			const t = distance / zone;
 			dy = Math.round(4 + t * 18); // 4..22 px/frame
-			console.log('NEAR BOTTOM - distance to zone:', distance, 't:', t, 'dy:', dy);
+			// console.log('NEAR BOTTOM - distance to zone:', distance, 't:', t, 'dy:', dy);
 		}
 
-		console.log('Calculated dy:', dy);
+		// console.log('Calculated dy:', dy);
 
 		if (dy !== 0) {
 			const max = container.scrollHeight - container.clientHeight;
 			const next = Math.max(0, Math.min(max, container.scrollTop + dy));
-			console.log(
-				'Scroll calc - current:',
-				container.scrollTop,
-				'dy:',
-				dy,
-				'next:',
-				next,
-				'max:',
-				max
-			);
+			// console.log('Scroll calc - current:',container.scrollTop,'dy:',dy,next:',next,'max:',max);
 			if (next !== container.scrollTop) {
-				console.log('APPLYING SCROLL - from', container.scrollTop, 'to', next);
+				// console.log('APPLYING SCROLL - from', container.scrollTop, 'to', next);
 				container.scrollTop = next;
 				dragState.scrollTop = next;
 				// Update target with new scroll
 				dragState.targetIndex = indexFromPointer(lastClientY);
 			} else {
-				console.log('No scroll needed - already at', container.scrollTop);
+				// console.log('No scroll needed - already at', container.scrollTop);
 			}
-			console.log('Continuing animation');
+			// console.log('Continuing animation');
 			edgeRaf = requestAnimationFrame(edgeStep);
 		} else {
-			console.log('Stopping animation - no dy');
+			// console.log('Stopping animation - no dy');
 			edgeRaf = 0;
 		}
 	};

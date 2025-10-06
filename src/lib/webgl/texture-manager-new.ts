@@ -32,6 +32,7 @@ export class TextureManager {
 		for (let i = 0; i < maxSlots; i++) {
 			this.textures[i] = null;
 		}
+		console.log('New Texture Manager Constructed!');
 	}
 
 	/**
@@ -125,8 +126,8 @@ export class TextureManager {
 		width: number,
 		height: number,
 		color: [number, number, number, number],
-		wrap: TextureWrap = TextureWrap.CLAMP,
-		filter: TextureFilter = TextureFilter.LINEAR
+		wrap: number = TextureWrap.CLAMP,
+		filter: number = TextureFilter.LINEAR
 	): void {
 		const gl = this.ensureWebGLContext();
 
@@ -371,14 +372,26 @@ export class TextureManager {
 	}
 }
 
-// Re-export enums for backward compatibility - exactly like original
-export enum TextureWrap {
-	CLAMP = WebGL2RenderingContext.CLAMP_TO_EDGE,
-	REPEAT = WebGL2RenderingContext.REPEAT,
-	MIRRORED_REPEAT = WebGL2RenderingContext.MIRRORED_REPEAT
+// WebGL constants - resolved at runtime to avoid SSR issues
+export const TextureWrap = {
+	CLAMP: 0x812f, // WebGL2RenderingContext.CLAMP_TO_EDGE
+	REPEAT: 0x2901, // WebGL2RenderingContext.REPEAT
+	MIRRORED_REPEAT: 0x8370 // WebGL2RenderingContext.MIRRORED_REPEAT
+} as const;
+
+export const TextureFilter = {
+	NEAREST: 0x2600, // WebGL2RenderingContext.NEAREST
+	LINEAR: 0x2601 // WebGL2RenderingContext.LINEAR
+} as const;
+
+// Enum-style access for backward compatibility
+export enum TextureWrapEnum {
+	CLAMP = 0x812f,
+	REPEAT = 0x2901,
+	MIRRORED_REPEAT = 0x8370
 }
 
-export enum TextureFilter {
-	NEAREST = WebGL2RenderingContext.NEAREST,
-	LINEAR = WebGL2RenderingContext.LINEAR
+export enum TextureFilterEnum {
+	NEAREST = 0x2600,
+	LINEAR = 0x2601
 }

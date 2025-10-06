@@ -3,6 +3,7 @@
 	// import { GPUCanvasRenderer } from '$lib/webgpu';
 	// import { WebGLCanvasRenderer as GPUCanvasRenderer } from '$lib/webgl';
 	import { type WebGLRenderer } from '$lib/webgl/webgl-renderer';
+	import { webglContextService, webglRendererService } from '$lib/core/services';
 	import sample_background from '$lib/assets/bg.jpg';
 	import sample_foreground from '$lib/assets/fg.jpg';
 
@@ -33,28 +34,61 @@
 
 	// let containerAspect: number = 0;
 
-	// Initialize WebGPU renderer
+	// Initialize WebGL renderer using service container
 	onMount(async () => {
-		const { WebGLRenderer } = await import('$lib/webgl/webgl-renderer');
-
 		if (!canvasEl) return;
 
 		try {
-			info = 'Initializing WebGPU...';
-			renderer = new WebGLRenderer(canvasEl);
-			await renderer.init();
-			info = 'WebGPU Ready';
+			info = 'Initializing WebGL...';
+
+			// Initialize WebGL context with canvas
+			webglContextService.initialize(canvasEl);
+
+			// Preload the image list
+			const imageList = [
+				{ id: 'bg', url: bgUrl!, label: 'Background' },
+				{ id: 'fg0', url: fgUrl!, label: 'Foreground0' },
+				{ id: 'fg1', url: 'https://picsum.photos/seed/fg1/200/300', label: 'Foreground1' },
+				{ id: 'fg2', url: 'https://picsum.photos/seed/fg2/400/300', label: 'Foreground2' },
+				{ id: 'fg3', url: 'https://picsum.photos/seed/fg3/600/300', label: 'Foreground3' },
+				{ id: 'fg4', url: 'https://picsum.photos/seed/fg4/800/600', label: 'Foreground4' },
+				{ id: 'fg5', url: 'https://picsum.photos/seed/fg5/500/600', label: 'Foreground5' },
+				{ id: 'fg6', url: 'https://picsum.photos/seed/fg6/300/600', label: 'Foreground6' },
+				{ id: 'fg7', url: 'https://picsum.photos/seed/fg7/200/300', label: 'Foreground7' },
+				{ id: 'fg8', url: 'https://picsum.photos/seed/fg8/400/300', label: 'Foreground8' },
+				{ id: 'fg9', url: 'https://picsum.photos/seed/fg9/600/300', label: 'Foreground9' },
+				{ id: 'fg10', url: 'https://picsum.photos/seed/fg10/800/600', label: 'Foreground10' },
+				{ id: 'fg11', url: 'https://picsum.photos/seed/fg11/500/600', label: 'Foreground11' },
+				{ id: 'fg12', url: 'https://picsum.photos/seed/fg12/300/600', label: 'Foreground12' },
+				{ id: 'fg13', url: 'https://picsum.photos/seed/fg13/200/300', label: 'Foreground13' },
+				{ id: 'fg14', url: 'https://picsum.photos/seed/fg14/400/300', label: 'Foreground14' },
+				{ id: 'fg15', url: 'https://picsum.photos/seed/fg15/600/300', label: 'Foreground15' },
+				{ id: 'fg16', url: 'https://picsum.photos/seed/fg16/800/600', label: 'Foreground16' },
+				{ id: 'fg17', url: 'https://picsum.photos/seed/fg17/500/600', label: 'Foreground17' },
+				{ id: 'fg18', url: 'https://picsum.photos/seed/fg18/300/600', label: 'Foreground18' },
+				{ id: 'fg19', url: 'https://picsum.photos/seed/fg19/200/300', label: 'Foreground19' }
+			];
+
+			// Import texture manager service and preload images
+			const { textureManagerService } = await import('$lib/core/services');
+			console.log('Starting image preloading...');
+			await textureManagerService.preloadImageList(imageList);
+			console.log('Image preloading complete');
+
+			// Get renderer from service
+			renderer = await webglRendererService.getRenderer(canvasEl);
+			info = 'WebGL Ready';
 
 			// Load initial images if present
 			if (bgUrl) {
-				await renderer.updateTexture(0, bgUrl);
+				await webglRendererService.updateTexture(0, bgUrl);
 			}
 			if (fgUrl) {
-				await renderer.updateTexture(1, fgUrl);
+				await webglRendererService.updateTexture(1, fgUrl);
 			}
 		} catch (error) {
-			info = 'WebGPU Error';
-			console.error('Failed to initialize WebGPU:', error);
+			info = 'WebGL Error';
+			console.error('Failed to initialize WebGL:', error);
 		}
 	});
 
@@ -65,11 +99,17 @@
 			return;
 		}
 
-		renderer.setMixValue(mix);
+		// Update mix value using service
+		webglRendererService.setMixValue(mix);
 
-		if (bgUrl) renderer.updateTexture(0, bgUrl);
+		// Update textures using service
+		if (bgUrl) {
+			webglRendererService.updateTexture(0, bgUrl);
+		}
 
-		if (fgUrl) renderer.updateTexture(1, fgUrl);
+		if (fgUrl) {
+			webglRendererService.updateTexture(1, fgUrl);
+		}
 	});
 
 	// --- Drag & Drop ---
@@ -210,31 +250,7 @@
 			class="h-full w-full overflow-y-auto overflow-x-hidden data-simplebar"
 			style="scrollbar-gutter: auto; scroll-behavior: smooth;"
 		>
-			<ImageListContainer
-				images={[
-					{ id: 'bg', url: bgUrl!, label: 'Background' },
-					{ id: 'fg0', url: fgUrl!, label: 'Foreground0' },
-					{ id: 'fg1', url: 'https://picsum.photos/seed/fg1/200/300', label: 'Foreground1' },
-					{ id: 'fg2', url: 'https://picsum.photos/seed/fg2/400/300', label: 'Foreground2' },
-					{ id: 'fg3', url: 'https://picsum.photos/seed/fg3/600/300', label: 'Foreground3' },
-					{ id: 'fg4', url: 'https://picsum.photos/seed/fg4/800/600', label: 'Foreground4' },
-					{ id: 'fg5', url: 'https://picsum.photos/seed/fg5/500/600', label: 'Foreground5' },
-					{ id: 'fg6', url: 'https://picsum.photos/seed/fg6/300/600', label: 'Foreground6' },
-					{ id: 'fg7', url: 'https://picsum.photos/seed/fg7/200/300', label: 'Foreground7' },
-					{ id: 'fg8', url: 'https://picsum.photos/seed/fg8/400/300', label: 'Foreground8' },
-					{ id: 'fg9', url: 'https://picsum.photos/seed/fg9/600/300', label: 'Foreground9' },
-					{ id: 'fg10', url: 'https://picsum.photos/seed/fg10/800/600', label: 'Foreground10' },
-					{ id: 'fg11', url: 'https://picsum.photos/seed/fg11/500/600', label: 'Foreground11' },
-					{ id: 'fg12', url: 'https://picsum.photos/seed/fg12/300/600', label: 'Foreground12' },
-					{ id: 'fg13', url: 'https://picsum.photos/seed/fg13/200/300', label: 'Foreground13' },
-					{ id: 'fg14', url: 'https://picsum.photos/seed/fg14/400/300', label: 'Foreground14' },
-					{ id: 'fg15', url: 'https://picsum.photos/seed/fg15/600/300', label: 'Foreground15' },
-					{ id: 'fg16', url: 'https://picsum.photos/seed/fg16/800/600', label: 'Foreground16' },
-					{ id: 'fg17', url: 'https://picsum.photos/seed/fg17/500/600', label: 'Foreground17' },
-					{ id: 'fg18', url: 'https://picsum.photos/seed/fg18/300/600', label: 'Foreground18' },
-					{ id: 'fg19', url: 'https://picsum.photos/seed/fg19/200/300', label: 'Foreground19' }
-				]}
-			></ImageListContainer>
+			<ImageListContainer></ImageListContainer>
 		</OverlayScrollbarsComponent>
 	</div>
 

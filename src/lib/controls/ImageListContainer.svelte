@@ -4,10 +4,47 @@
 	import ListPlaceholder from './ListPlaceholder.svelte';
 	import { onMount } from 'svelte';
 	import ReorderOverlay from './ReorderOverlay.svelte';
+	import { textureManagerService } from '../core/services';
+	import type { ImageDefinition } from '../core/services/TextureManagerService';
 
 	export type ImageItem = { id: string; url: string; label: string };
 
-	let { images = [], children }: { images?: ImageItem[]; children?: any } = $props();
+	let { children }: { children?: any } = $props();
+
+	// Get images from texture manager service
+	let images: ImageItem[] = $state([]);
+
+	// Load images from texture manager service
+	let isLoadingImages = $state(true);
+	let loadAttempts = $state(0);
+	const maxLoadAttempts = 50; // 5 seconds max
+
+	onMount(() => {
+		const loadImages = () => {
+			const imageDefinitions = textureManagerService.getAllImageDefinitions();
+			loadAttempts++;
+
+			if (imageDefinitions.length > 0) {
+				images = imageDefinitions.map((def) => ({
+					id: def.id,
+					url: def.url,
+					label: def.label
+				}));
+				isLoadingImages = false;
+				console.log(`Loaded ${images.length} images from texture manager service`);
+			} else if (loadAttempts < maxLoadAttempts) {
+				// If no images yet, try again in a bit (polling approach)
+				setTimeout(loadImages, 100);
+			} else {
+				// Give up after max attempts
+				isLoadingImages = false;
+				console.warn('Failed to load images from texture manager service after maximum attempts');
+			}
+		};
+
+		// Initial attempt
+		loadImages();
+	});
 
 	function handleFiles(files: FileList) {
 		const newItems: ImageItem[] = Array.from(files).map((file) => ({
@@ -108,31 +145,40 @@
 >
 	{@render children?.()}
 
-	{#each images as image, i (image.id)}
-		<!-- <li class="bg-blue-400 py-1 px-[max(calc(var(--spacing)*5),var(--scrollbar-width))]">
+	{#if isLoadingImages}
+		<div class="py-4 px-4 text-center text-base-content/70">
+			<p>Loading images...</p>
+		</div>
+	{:else if images.length === 0}
+		<div class="py-4 px-4 text-center text-base-content/50">
+			<p>No images available</p>
+		</div>
+	{:else}
+		{#each images as image, i (image.id)}
+			<!-- <li class="bg-blue-400 py-1 px-[max(calc(var(--spacing)*5),var(--scrollbar-width))]">
 			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
 		</li> -->
-		<!-- <li
+			<!-- <li
 			class="bg-blue-400 py-1 pl-[var(--list-container-padding-left)] pr-[var(--list-container-padding-right)]"
 		>
 			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
 		</li> -->
-		<li class=" py-1 px-4 list-item">
-			<ListImage
-				id={image.id}
-				index={i}
-				fileUrl={image.url}
-				label={image.label}
-				onRemove={() => removeImage(image.id)}
-				onReorderDragStart={handleReorderDragStart}
-			/>
-		</li>
-	{/each}
-
-	<!-- Placeholder uploader -->
-	<div class="py-1 px-4 list-item">
-		<ListPlaceholder onFiles={handleFiles} />
-	</div>
+			<li class=" py-1 px-4 list-item">
+				<ListImage
+					id={image.id}
+					index={i}
+					fileUrl={image.url}
+					label={image.label}
+					onRemove={() => removeImage(image.id)}
+					onReorderDragStart={handleReorderDragStart}
+				/>
+			</li>
+		{/each}
+		<!-- Placeholder uploader -->
+		<div class="py-1 px-4 list-item">
+			<ListPlaceholder onFiles={handleFiles} />
+		</div>
+	{/if}
 </ul>
 
 <ReorderOverlay
