@@ -1,133 +1,116 @@
 <script lang="ts">
-	import { dndzone } from 'svelte-dnd-action';
+	import type { UiImage } from '$lib/ui/types';
+	import {
+		imagesUi,
+		isLoadingImages as loadingStore, // avoid name collision
+		startImagesAdapter,
+		stopImagesAdapter,
+		addFiles as addFilesAction,
+		removeImage as removeImageAction,
+		reorder as reorderAction
+	} from '$lib/ui/adapters/imagesAdapter';
+
 	import ListImage from './ListImage.svelte';
 	import ListPlaceholder from './ListPlaceholder.svelte';
-	import { onMount } from 'svelte';
 	import ReorderOverlay from './ReorderOverlay.svelte';
-	import { textureManagerService } from '../core/services';
-	import type { ImageDefinition } from '../core/services/TextureManagerService';
 
-	export type ImageItem = { id: string; url: string; label: string };
+	// DOM ref
+	let listEl = $state<HTMLUListElement | null>(null);
 
-	let { children }: { children?: any } = $props();
+	// Local state
+	let images = $state<UiImage[]>([]);
+	let loading = $state<boolean>(true);
 
-	// Get images from texture manager service
-	let images: ImageItem[] = $state([]);
+	// Overlay state
+	let overlayOpen = $state<boolean>(false);
+	let initialDragIndex = $state<number | null>(null);
+	let initialPointer = $state<{ x: number; y: number } | null>(null);
+	// Keep same shape your ReorderOverlay expects
+	let overlayAnchor = $state<{ left: number; top: number; width: number } | null>(null);
 
-	// Load images from texture manager service
-	let isLoadingImages = $state(true);
-	let loadAttempts = $state(0);
-	const maxLoadAttempts = 50; // 5 seconds max
-
-	onMount(() => {
-		const loadImages = () => {
-			const imageDefinitions = textureManagerService.getAllImageDefinitions();
-			loadAttempts++;
-
-			if (imageDefinitions.length > 0) {
-				images = imageDefinitions.map((def) => ({
-					id: def.id,
-					url: def.url,
-					label: def.label
-				}));
-				isLoadingImages = false;
-				console.log(`Loaded ${images.length} images from texture manager service`);
-			} else if (loadAttempts < maxLoadAttempts) {
-				// If no images yet, try again in a bit (polling approach)
-				setTimeout(loadImages, 100);
-			} else {
-				// Give up after max attempts
-				isLoadingImages = false;
-				console.warn('Failed to load images from texture manager service after maximum attempts');
-			}
-		};
-
-		// Initial attempt
-		loadImages();
+	// Bootstrap adapter once (client-only)
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			void startImagesAdapter();
+			return () => {
+				stopImagesAdapter();
+			};
+		}
 	});
 
-	function handleFiles(files: FileList) {
-		const newItems: ImageItem[] = Array.from(files).map((file) => ({
-			id: crypto.randomUUID(),
-			url: URL.createObjectURL(file),
-			label: file.name
-		}));
+	// Subscribe to adapter stores → local $state
+	$effect(() => {
+		const un1 = imagesUi.subscribe((v) => {
+			images = v;
+		});
+		const un2 = loadingStore.subscribe((v) => {
+			loading = v;
+		});
+		return () => {
+			un1();
+			un2();
+		};
+	});
 
-		images = [...images, ...newItems];
+	// Upload: only through your existing placeholder component
+	function handleFiles(files: FileList | File[]): void {
+		void addFilesAction(files);
 	}
 
-	function handleDrop(event: DragEvent) {
-		event.preventDefault();
-		if (event.dataTransfer?.files?.length) {
-			handleFiles(event.dataTransfer.files);
+	// Drag-and-drop onto the list (optional, uses same action)
+	function handleDrop(e: DragEvent): void {
+		e.preventDefault();
+		const files = e.dataTransfer?.files;
+		if (files && files.length > 0) void addFilesAction(files);
+	}
+
+	// Removal
+	function removeImage(id: UiImage['id']): void {
+		void removeImageAction(id);
+	}
+
+	// Overlay anchoring + reorder
+	function updateOverlayAnchor(): void {
+		const el = document.getElementById('previewCardWrapper') ?? listEl;
+		if (!el) {
+			overlayAnchor = null;
+			return;
 		}
-	}
-
-	function openFileDialog() {
-		const input = document.createElement('input');
-		input.type = 'file';
-		input.accept = 'image/*';
-		input.multiple = true;
-		input.onchange = () => handleFiles(input.files!);
-		input.click();
-	}
-
-	function removeImage(id: string) {
-		const img = images.find((i) => i.id === id);
-		if (img) URL.revokeObjectURL(img.url);
-		images = images.filter((i) => i.id !== id);
-	}
-
-	let overlayOpen = $state(false);
-	let initialDragIndex = $state<number | null>(null); // ADD
-	let initialPointer = $state<{ x: number; y: number } | null>(null);
-	const rowHeight = 96; // align with overlay tile size
-
-	let listEl: HTMLElement | null = $state(null); // ADD
-	let overlayAnchor = $state<{ left: number; top: number; width: number } | null>(null); // ADD
-
-	function updateOverlayAnchor() {
-		// ADD
-		if (!listEl) return;
-		const r = listEl.getBoundingClientRect();
+		const r = el.getBoundingClientRect();
 		overlayAnchor = { left: r.left, top: r.top, width: r.width };
 	}
 
-	function openReorder() {
-		if (!images?.length) return;
-		updateOverlayAnchor();
-		overlayOpen = true;
-		initialDragIndex = null;
-	}
-
-	function handleReorderDragStart(id: string, index: number, x: number, y: number) {
-		if (!images?.length) return;
+	function handleReorderDragStart(_id: UiImage['id'], index: number, x: number, y: number): void {
+		if (images.length === 0) return;
 		updateOverlayAnchor();
 		initialDragIndex = index;
 		initialPointer = { x, y };
 		overlayOpen = true;
 	}
 
-	function handleCommit(next: ImageItem[]) {
-		images = next;
+	async function handleCommit(next: UiImage[]): Promise<void> {
+		await reorderAction(next.map((n) => n.id));
 		overlayOpen = false;
 		initialDragIndex = null;
+		initialPointer = null;
 	}
 
-	function handleCancel() {
+	function handleCancel(): void {
 		overlayOpen = false;
 		initialDragIndex = null;
+		initialPointer = null;
 	}
 
+	// Keep overlay anchored while open
 	$effect(() => {
 		if (!overlayOpen) return;
-		const h = () => updateOverlayAnchor();
+		const onChange = (): void => updateOverlayAnchor();
 		updateOverlayAnchor();
-		window.addEventListener('resize', h);
-		window.addEventListener('scroll', h, true); // capture scrolls in ancestors
+		window.addEventListener('resize', onChange);
+		window.addEventListener('scroll', onChange, true);
 		return () => {
-			window.removeEventListener('resize', h);
-			window.removeEventListener('scroll', h, true);
+			window.removeEventListener('resize', onChange);
+			window.removeEventListener('scroll', onChange, true);
 		};
 	});
 </script>
@@ -137,48 +120,34 @@
 	id="imageList"
 	role="listbox"
 	tabindex="0"
-	aria-label={'Image list drop zone'}
+	aria-label="Image list drop zone"
 	aria-dropeffect="copy"
 	class="flex flex-col gap-0 list"
 	ondrop={handleDrop}
 	ondragover={(e) => e.preventDefault()}
 >
-	{@render children?.()}
-
-	{#if isLoadingImages}
-		<div class="py-4 px-4 text-center text-base-content/70">
+	{#if loading}
+		<li class="py-4 px-4 text-center text-base-content/70">
 			<p>Loading images...</p>
-		</div>
-	{:else if images.length === 0}
-		<div class="py-4 px-4 text-center text-base-content/50">
-			<p>No images available</p>
-		</div>
-	{:else}
-		{#each images as image, i (image.id)}
-			<!-- <li class="bg-blue-400 py-1 px-[max(calc(var(--spacing)*5),var(--scrollbar-width))]">
-			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
-		</li> -->
-			<!-- <li
-			class="bg-blue-400 py-1 pl-[var(--list-container-padding-left)] pr-[var(--list-container-padding-right)]"
-		>
-			<ListImage fileUrl={image.url} label={image.label} onRemove={() => removeImage(image.id)} />
-		</li> -->
-			<li class=" py-1 px-4 list-item">
-				<ListImage
-					id={image.id}
-					index={i}
-					fileUrl={image.url}
-					label={image.label}
-					onRemove={() => removeImage(image.id)}
-					onReorderDragStart={handleReorderDragStart}
-				/>
-			</li>
-		{/each}
-		<!-- Placeholder uploader -->
-		<div class="py-1 px-4 list-item">
-			<ListPlaceholder onFiles={handleFiles} />
-		</div>
+		</li>
 	{/if}
+
+	{#each images as image, i (image.id)}
+		<li class="py-1 px-4 list-item">
+			<ListImage
+				id={image.id}
+				index={i}
+				fileUrl={image.url}
+				label={image.name}
+				onRemove={() => removeImage(image.id)}
+				onReorderDragStart={handleReorderDragStart}
+			/>
+		</li>
+	{/each}
+
+	<li class="py-1 px-4 list-item">
+		<ListPlaceholder onFiles={handleFiles} />
+	</li>
 </ul>
 
 <ReorderOverlay
@@ -188,5 +157,4 @@
 	{initialDragIndex}
 	{initialPointer}
 	onCommit={handleCommit}
-	onCancel={handleCancel}
 />

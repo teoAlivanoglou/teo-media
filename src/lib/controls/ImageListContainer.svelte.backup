@@ -1,0 +1,150 @@
+<script lang="ts">
+  import type { UiImage } from "$lib/core/ui/types";
+  import {
+    imagesUi,
+    isLoadingImages as loadingStore, // avoid name collision
+    startImagesAdapter,
+    stopImagesAdapter,
+    addFiles as addFilesAction,
+    removeImage as removeImageAction,
+    reorder as reorderAction,
+  } from "$lib/ui/imagesAdapter";
+
+  import ListImage from "./ListImage.svelte";
+  import ListPlaceholder from "./ListPlaceholder.svelte";
+  import ReorderOverlay from "./ReorderOverlay.svelte";
+
+  // DOM ref
+  let listEl = $state<HTMLUListElement | null>(null);
+
+  // Local state
+  let images = $state<UiImage[]>([]);
+  let loading = $state<boolean>(true);
+
+  // Overlay state
+  let overlayOpen = $state<boolean>(false);
+  let initialDragIndex = $state<number | null>(null);
+  let initialPointer = $state<{ x: number; y: number } | null>(null);
+  // Keep same shape your ReorderOverlay expects
+  let overlayAnchor = $state<{ left: number; top: number; width: number } | null>(null);
+
+  // Bootstrap adapter once (client-only)
+  $effect(() => {
+    if (typeof window !== "undefined") {
+      void startImagesAdapter();
+      return () => { stopImagesAdapter(); };
+    }
+  });
+
+  // Subscribe to adapter stores → local $state
+  $effect(() => {
+    const un1 = imagesUi.subscribe((v) => { images = v; });
+    const un2 = loadingStore.subscribe((v) => { loading = v; });
+    return () => { un1(); un2(); };
+  });
+
+  // Upload: only through your existing placeholder component
+  function handleFiles(files: FileList | File[]): void {
+    void addFilesAction(files);
+  }
+
+  // Drag-and-drop onto the list (optional, uses same action)
+  function handleDrop(e: DragEvent): void {
+    e.preventDefault();
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) void addFilesAction(files);
+  }
+
+  // Removal
+  function removeImage(id: UiImage["id"]): void {
+    void removeImageAction(id);
+  }
+
+  // Overlay anchoring + reorder
+  function updateOverlayAnchor(): void {
+    const el = document.getElementById("previewCardWrapper") ?? listEl;
+    if (!el) { overlayAnchor = null; return; }
+    const r = el.getBoundingClientRect();
+    overlayAnchor = { left: r.left, top: r.top, width: r.width };
+  }
+
+  function handleReorderDragStart(_id: UiImage["id"], index: number, x: number, y: number): void {
+    if (images.length === 0) return;
+    updateOverlayAnchor();
+    initialDragIndex = index;
+    initialPointer = { x, y };
+    overlayOpen = true;
+  }
+
+  async function handleCommit(next: UiImage[]): Promise<void> {
+    await reorderAction(next.map((n) => n.id));
+    overlayOpen = false;
+    initialDragIndex = null;
+    initialPointer = null;
+  }
+
+  function handleCancel(): void {
+    overlayOpen = false;
+    initialDragIndex = null;
+    initialPointer = null;
+  }
+
+  // Keep overlay anchored while open
+  $effect(() => {
+    if (!overlayOpen) return;
+    const onChange = (): void => updateOverlayAnchor();
+    updateOverlayAnchor();
+    window.addEventListener("resize", onChange);
+    window.addEventListener("scroll", onChange, true);
+    return () => {
+      window.removeEventListener("resize", onChange);
+      window.removeEventListener("scroll", onChange, true);
+    };
+  });
+</script>
+
+<ul
+  bind:this={listEl}
+  id="imageList"
+  role="listbox"
+  tabindex="0"
+  aria-label="Image list drop zone"
+  aria-dropeffect="copy"
+  class="flex flex-col gap-0 list"
+  ondrop={handleDrop}
+  ondragover={(e) => e.preventDefault()}
+>
+  {#if loading}
+    <li class="py-4 px-4 text-center text-base-content/70">
+      <p>Loading images...</p>
+    </li>
+  {/if}
+
+  {#each images as image, i (image.id)}
+    <li class="py-1 px-4 list-item">
+      <ListImage
+        id={image.id}              <!-- ImageId type -->
+        index={i}
+        fileUrl={image.url}
+        label={image.name}
+        onRemove={() => removeImage(image.id)}
+        onReorderDragStart={handleReorderDragStart}
+      />
+    </li>
+  {/each}
+
+  <!-- ALWAYS show your existing placeholder; no extra HTML added -->
+  <li class="py-1 px-4 list-item">
+    <ListPlaceholder onFiles={handleFiles} />
+  </li>
+</ul>
+
+<ReorderOverlay
+  open={overlayOpen}
+  items={images}
+  anchor={overlayAnchor}
+  {initialDragIndex}
+  {initialPointer}
+  onCommit={handleCommit}
+  onCancel={handleCancel}
+/>

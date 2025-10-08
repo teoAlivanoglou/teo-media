@@ -1,16 +1,18 @@
 <script lang="ts">
-	export let id: string; // ADD
-	export let index: number; // ADD
-
+	import type { ImageId } from '$lib/core/types/core';
+	// Props (runes mode still supports `export let`)
+	export let id: ImageId;
+	export let index: number;
 	export let label: string;
 	export let fileUrl: string | null = null;
 	export let onRemove: () => void;
 	export let onSettings: () => void = () => {};
-
-	// Callback prop (Svelte 5 style) to notify parent to open overlay
+	// Use ImageId in the callback signature too (no widening to string)
 	export let onReorderDragStart:
-		| undefined
-		| ((id: string, index: number, x: number, y: number) => void) = undefined; // ADD
+		| ((id: ImageId, index: number, x: number, y: number) => void)
+		| undefined = undefined;
+	// Optional extra class (avoid $$restProps to keep ESLint happy)
+	export let className: string = '';
 </script>
 
 <div
@@ -20,11 +22,9 @@
     card card-border border-base-content/30
     w-48 lg:w-64 xl:w-80
 	overflow-hidden
-    ${$$restProps?.class || ''}`}
+    ${className}`}
 	draggable="false"
 >
-	<!-- ADD: avoid native DnD -->
-
 	<div class=" grid grid-rows-[1fr_2fr_1fr] h-auto border-r border-base-content/30">
 		<!-- Remove -->
 		<button
@@ -61,8 +61,8 @@
 
 	<div class="flex-grow w-full aspect-video">
 		<img
-			src={fileUrl}
-			class=" object-contain pointer-events-none w-full h-full select-none"
+			src={fileUrl ?? ''}
+			class="object-contain pointer-events-none w-full h-full select-none"
 			draggable="false"
 			alt={`${label} Preview`}
 		/>

@@ -3,7 +3,7 @@
 	// import { GPUCanvasRenderer } from '$lib/webgpu';
 	// import { WebGLCanvasRenderer as GPUCanvasRenderer } from '$lib/webgl';
 	import { type WebGLRenderer } from '$lib/webgl/webgl-renderer';
-	import { webglContextService, webglRendererService } from '$lib/core/services';
+	import { webglContextService, webglRendererService } from '$lib/core/services-old';
 	import sample_background from '$lib/assets/bg.jpg';
 	import sample_foreground from '$lib/assets/fg.jpg';
 
@@ -49,31 +49,42 @@
 				{ id: 'bg', url: bgUrl!, label: 'Background' },
 				{ id: 'fg0', url: fgUrl!, label: 'Foreground0' },
 				{ id: 'fg1', url: 'https://picsum.photos/seed/fg1/200/300', label: 'Foreground1' },
-				{ id: 'fg2', url: 'https://picsum.photos/seed/fg2/400/300', label: 'Foreground2' },
-				{ id: 'fg3', url: 'https://picsum.photos/seed/fg3/600/300', label: 'Foreground3' },
-				{ id: 'fg4', url: 'https://picsum.photos/seed/fg4/800/600', label: 'Foreground4' },
-				{ id: 'fg5', url: 'https://picsum.photos/seed/fg5/500/600', label: 'Foreground5' },
-				{ id: 'fg6', url: 'https://picsum.photos/seed/fg6/300/600', label: 'Foreground6' },
-				{ id: 'fg7', url: 'https://picsum.photos/seed/fg7/200/300', label: 'Foreground7' },
-				{ id: 'fg8', url: 'https://picsum.photos/seed/fg8/400/300', label: 'Foreground8' },
-				{ id: 'fg9', url: 'https://picsum.photos/seed/fg9/600/300', label: 'Foreground9' },
-				{ id: 'fg10', url: 'https://picsum.photos/seed/fg10/800/600', label: 'Foreground10' },
-				{ id: 'fg11', url: 'https://picsum.photos/seed/fg11/500/600', label: 'Foreground11' },
-				{ id: 'fg12', url: 'https://picsum.photos/seed/fg12/300/600', label: 'Foreground12' },
-				{ id: 'fg13', url: 'https://picsum.photos/seed/fg13/200/300', label: 'Foreground13' },
-				{ id: 'fg14', url: 'https://picsum.photos/seed/fg14/400/300', label: 'Foreground14' },
-				{ id: 'fg15', url: 'https://picsum.photos/seed/fg15/600/300', label: 'Foreground15' },
-				{ id: 'fg16', url: 'https://picsum.photos/seed/fg16/800/600', label: 'Foreground16' },
-				{ id: 'fg17', url: 'https://picsum.photos/seed/fg17/500/600', label: 'Foreground17' },
-				{ id: 'fg18', url: 'https://picsum.photos/seed/fg18/300/600', label: 'Foreground18' },
-				{ id: 'fg19', url: 'https://picsum.photos/seed/fg19/200/300', label: 'Foreground19' }
+				{ id: 'fg2', url: 'https://picsum.photos/seed/fg2/400/300', label: 'Foreground2' }
+				// { id: 'fg3', url: 'https://picsum.photos/seed/fg3/600/300', label: 'Foreground3' },
+				// { id: 'fg4', url: 'https://picsum.photos/seed/fg4/800/600', label: 'Foreground4' },
+				// { id: 'fg5', url: 'https://picsum.photos/seed/fg5/500/600', label: 'Foreground5' },
+				// { id: 'fg6', url: 'https://picsum.photos/seed/fg6/300/600', label: 'Foreground6' },
+				// { id: 'fg7', url: 'https://picsum.photos/seed/fg7/200/300', label: 'Foreground7' },
+				// { id: 'fg8', url: 'https://picsum.photos/seed/fg8/400/300', label: 'Foreground8' },
+				// { id: 'fg9', url: 'https://picsum.photos/seed/fg9/600/300', label: 'Foreground9' },
+				// { id: 'fg10', url: 'https://picsum.photos/seed/fg10/800/600', label: 'Foreground10' },
+				// { id: 'fg11', url: 'https://picsum.photos/seed/fg11/500/600', label: 'Foreground11' },
+				// { id: 'fg12', url: 'https://picsum.photos/seed/fg12/300/600', label: 'Foreground12' },
+				// { id: 'fg13', url: 'https://picsum.photos/seed/fg13/200/300', label: 'Foreground13' },
+				// { id: 'fg14', url: 'https://picsum.photos/seed/fg14/400/300', label: 'Foreground14' },
+				// { id: 'fg15', url: 'https://picsum.photos/seed/fg15/600/300', label: 'Foreground15' },
+				// { id: 'fg16', url: 'https://picsum.photos/seed/fg16/800/600', label: 'Foreground16' },
+				// { id: 'fg17', url: 'https://picsum.photos/seed/fg17/500/600', label: 'Foreground17' },
+				// { id: 'fg18', url: 'https://picsum.photos/seed/fg18/300/600', label: 'Foreground18' },
+				// { id: 'fg19', url: 'https://picsum.photos/seed/fg19/200/300', label: 'Foreground19' }
 			];
 
-			// Import texture manager service and preload images
-			const { textureManagerService } = await import('$lib/core/services');
-			console.log('Starting image preloading...');
-			await textureManagerService.preloadImageList(imageList);
-			console.log('Image preloading complete');
+			// Import texture manager service and check user state first
+			const { textureManagerService } = await import('$lib/core/services-old');
+
+			// Check if user has uploaded images
+			const existingState = textureManagerService.getImageState();
+			const hasUserImages = existingState.uploaded.length > 0;
+
+			if (hasUserImages) {
+				console.log(`Loading ${existingState.uploaded.length} user-uploaded images...`);
+				// User has uploaded images, they'll be loaded via the subscription in ImageListContainer
+				// No need to preload initial images
+			} else {
+				console.log('No user images found, preloading initial images...');
+				await textureManagerService.preloadImageList(imageList);
+				console.log('Initial image preloading complete');
+			}
 
 			// Get renderer from service
 			renderer = await webglRendererService.getRenderer(canvasEl);
@@ -88,7 +99,7 @@
 			}
 		} catch (error) {
 			info = 'WebGL Error';
-			console.error('Failed to initialize WebGL:', error);
+			// console.error('Failed to initialize WebGL:', error);
 		}
 	});
 
@@ -211,19 +222,7 @@
 	bind:this={containerEl}
 	class=" h-full grid [grid-template-areas:'previews_canvas''button_canvas'] grid-cols-[auto_1fr] grid-rows-[1fr_auto] gap-4"
 >
-	<!-- <button
-		class="[grid-area:button] bg-primary text-primary-content hover:bg-accent-hover
-		shadow-lg text-foreground-inverse font-semibold py-2 px-4 rounded-2xl transition"
-	> -->
 	<button class="btn btn-primary"> Download </button>
-
-	<!-- Previews card -->
-	<!-- <div
-		id="previewCardWrapper"
-		class="[grid-area:previews]
-		flex flex-col
-		bg-base-200 shadow-lg border border-border rounded-2xl overflow-hidden py-2"
-	> -->
 
 	<div
 		id="previewCardWrapper"
@@ -250,7 +249,7 @@
 			class="h-full w-full overflow-y-auto overflow-x-hidden data-simplebar"
 			style="scrollbar-gutter: auto; scroll-behavior: smooth;"
 		>
-			<ImageListContainer></ImageListContainer>
+			<ImageListContainer />
 		</OverlayScrollbarsComponent>
 	</div>
 
